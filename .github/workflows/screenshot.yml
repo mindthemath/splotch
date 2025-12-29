@@ -81,21 +81,19 @@ jobs:
             echo "Branch screenshots exists, checking out..."
             git fetch origin screenshots:screenshots || true
             git checkout screenshots
-            # Remove all tracked files
-            git rm -rf . 2>/dev/null || true
           else
             echo "Creating new orphan branch screenshots..."
             git checkout --orphan screenshots
           fi
 
-          # Ensure clean state (remove untracked files)
-          git clean -fd || true
+          # Remove ALL files and directories except .git
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
 
-          # Copy screenshot to the branch after cleaning
+          # Copy screenshot to the branch
           mkdir -p assets
           cp /tmp/screenshot.png assets/screenshot.png
 
-          # Commit the screenshot
+          # Commit only the screenshot
           git add assets/screenshot.png
           git commit -m "Update landing page screenshot [skip ci]"
 
