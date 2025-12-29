@@ -102,8 +102,12 @@ jobs:
           echo "\n![capture-2 2](capture2.png)\n" >> README.md
 
           # Commit only the screenshot (first and only commit)
-          git add assets/capture.png assets/capture2.png
+          git add capture*.png
           git commit -m "Update landing page screenshots [skip ci]"
 
           # Force push to replace remote branch completely
           git push origin screenshots --force
+
+          # Success message
+          echo "Done!"
+          echo "Orphan branch: https://github.com/mindthemath/splotch/tree/screenshots"
