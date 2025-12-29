@@ -469,10 +469,15 @@ type Params = {
 function simulate(params: Params) {
   const rng = makeRng(params.seed);
 
-  const W = params.fieldSize;
-  const H = params.fieldSize;
-  const field = new Field(W, H);
-  const center = { x: W / 2, y: H / 2 };
+  // Use a larger internal field for simulation to prevent clipping.
+  const displayW = params.fieldSize;
+  const workingW = displayW * 3; 
+  const field = new Field(workingW, workingW);
+  const center = { x: workingW / 2, y: workingW / 2 };
+  
+  // Physics units are based on displayW, so the splotch stays "normal size"
+  // inside the huge workingW buffer.
+  const physW = displayW; 
 
   function sampleSource(): { p: Vec2; v: Vec2; vz: number } {
     const speed = rng.range(0.6, 1.2);
@@ -480,7 +485,7 @@ function simulate(params: Params) {
 
     if (params.geometry === "circle") {
       const ang = rng.range(0, Math.PI * 2);
-      const r = Math.abs(rng.normal()) * (W * 0.06);
+      const r = Math.abs(rng.normal()) * (physW * 0.06);
       const p = add(center, { x: Math.cos(ang) * r, y: Math.sin(ang) * r });
       const vdir = rot({ x: 1, y: 0 }, rng.range(0, Math.PI * 2));
       const v = mul(vdir, speed);
@@ -489,14 +494,14 @@ function simulate(params: Params) {
 
     if (params.geometry === "line") {
       const t = rng.range(-0.5, 0.5);
-      const lineLen = W * 0.22;
-      const p = add(center, { x: t * lineLen, y: rng.normal() * (W * 0.02) });
+      const lineLen = physW * 0.22;
+      const p = add(center, { x: t * lineLen, y: rng.normal() * (physW * 0.02) });
       const v = { x: speed * rng.range(0.6, 1.3), y: rng.normal() * 0.2 };
       return { p, v, vz };
     }
 
     if (params.geometry === "spray") {
-      const baseStd = W * 0.085;
+      const baseStd = physW * 0.085;
       const ang = (params.sprayAngleDeg * Math.PI) / 180;
       const dir = { x: Math.cos(ang), y: Math.sin(ang) };
       const perp = { x: -dir.y, y: dir.x };
@@ -504,7 +509,7 @@ function simulate(params: Params) {
 
       const alongStd = baseStd * (1 + 2.2 * cov);
       const perpStd = baseStd * (1 - 0.55 * cov);
-      const meanShift = params.sprayMagnitude * (W * 0.14);
+      const meanShift = params.sprayMagnitude * (physW * 0.14);
 
       const along = rng.normal() * alongStd + meanShift * (0.25 + 0.75 * rng.float());
       const across = rng.normal() * perpStd;
@@ -519,7 +524,7 @@ function simulate(params: Params) {
     }
 
     // fling fallback (real fling logic below)
-    const p = add(center, { x: rng.normal() * (W * 0.05), y: rng.normal() * (W * 0.05) });
+    const p = add(center, { x: rng.normal() * (physW * 0.05), y: rng.normal() * (physW * 0.05) });
     const v = { x: rng.normal() * speed * 2.0, y: rng.normal() * speed * 2.0 };
     return { p, v, vz };
   }
@@ -529,8 +534,8 @@ function simulate(params: Params) {
   const swirl = rng.range(-0.8, 0.8);
 
   function surfaceFlow(p: Vec2): Vec2 {
-    const u = (p.x - center.x) / (W * 0.5);
-    const v = (p.y - center.y) / (H * 0.5);
+    const u = (p.x - center.x) / (physW * 0.5);
+    const v = (p.y - center.y) / (physW * 0.5);
     const radial = norm({ x: u, y: v });
     const tang = { x: -radial.y, y: radial.x };
     const f1 = mul(flowDir, 0.65);
@@ -554,8 +559,8 @@ function simulate(params: Params) {
 
   function sampleBrushOrigin(dir: Vec2) {
     const perp = { x: -dir.y, y: dir.x };
-    const brushWidth = W * 0.10;
-    const along = W * 0.10;
+    const brushWidth = physW * 0.10;
+    const along = physW * 0.10;
     const u = rng.range(-0.5, 0.5);
     const v = rng.range(-0.5, 0.5);
     return add(center, add(mul(perp, u * brushWidth), mul(dir, v * along)));
@@ -577,9 +582,9 @@ function simulate(params: Params) {
       const along = power * (0.9 + 0.6 * rng.float());
       const across = power * (0.08 + 0.22 * (1 - params.directionality)) * rng.normal();
 
-      const v = add(mul(dir, along / (W * 0.02)), mul(perp, across / (W * 0.02)));
+      const v = add(mul(dir, along / (physW * 0.02)), mul(perp, across / (physW * 0.02)));
       const p0 = sampleBrushOrigin(dir);
-      const jitter = add(mul(perp, rng.normal() * (W * 0.01)), mul(dir, rng.normal() * (W * 0.01)));
+      const jitter = add(mul(perp, rng.normal() * (physW * 0.01)), mul(dir, rng.normal() * (physW * 0.01)));
       const p = add(p0, jitter);
 
       const vz = lerp(1.2, 2.6, clamp(heavy * 0.45, 0, 1));
@@ -603,11 +608,10 @@ function simulate(params: Params) {
 
       vz -= 1.4 * dt;
 
-      p = add(p, mul(v, W * 0.015 * dt));
+      p = add(p, mul(v, physW * 0.015 * dt));
       z += vz * dt;
 
-      p.x = clamp(p.x, 1, W - 2);
-      p.y = clamp(p.y, 1, H - 2);
+      // Don't clamp - let packets move freely, deposit functions handle bounds
 
       if (z <= 0) {
         impacted = true;
@@ -623,7 +627,7 @@ function simulate(params: Params) {
     const impactEnergy = clamp((sp + Math.abs(vz)) * 0.6 * sens, 0.15, 3.2);
 
     const baseR = params.baseRadius + rng.normal() * params.radiusJitter;
-    const coreR = clamp(baseR * (0.75 + 0.45 * impactEnergy), 1.5, W * 0.12);
+    const coreR = clamp(baseR * (0.75 + 0.45 * impactEnergy), 1.5, physW * 0.12);
 
     const coreAmt = packetMass * (0.9 + 0.5 * rng.float());
     const ang = Math.atan2(tangent.y, tangent.x);
@@ -664,15 +668,14 @@ function simulate(params: Params) {
     for (let t = 0; t < slideSteps; t++) {
       const f = surfaceFlow(ps);
       const visc = clamp(params.viscosity, 0, 1);
-      vv = add(mul(vv, 1 - 0.45 * dt), mul(f, W * 0.004 * (1 - visc)));
+      vv = add(mul(vv, 1 - 0.45 * dt), mul(f, workingW * 0.004 * (1 - visc)));
       ps = add(ps, vv);
 
       const rad = norm(sub(ps, center));
       const smearGain = params.geometry === "spray" ? 3.0 : 1.0;
       ps = add(ps, mul(rad, params.smear * smearGain * (0.35 + 0.65 * rng.float())));
 
-      ps.x = clamp(ps.x, 1, W - 2);
-      ps.y = clamp(ps.y, 1, H - 2);
+      // Don't clamp - let packets move freely, deposit functions handle bounds
 
       const rr = clamp(coreR * rng.range(0.12, params.geometry === "fling" ? 0.28 : 0.35), 0.7, coreR);
       const aa = packetMass * rng.range(0.04, params.geometry === "fling" ? 0.10 : 0.12);
@@ -711,18 +714,17 @@ function simulate(params: Params) {
     for (let b = 0; b < bounces; b++) {
       v = mul(v, params.restitution);
       vz = -vz * params.restitution;
-      p = add(p, mul(v, W * 0.01 * (0.6 + 0.4 * rng.float())));
-      p.x = clamp(p.x, 1, W - 2);
-      p.y = clamp(p.y, 1, H - 2);
+      p = add(p, mul(v, workingW * 0.01 * (0.6 + 0.4 * rng.float())));
+      // Don't clamp - let packets move freely, deposit functions handle bounds
       depositGaussian(field, p, clamp(coreR * rng.range(0.25, 0.5), 1, coreR), packetMass * rng.range(0.12, 0.25));
     }
   }
 
   if (params.noise > 0) {
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
+    for (let y = 0; y < workingW; y++) {
+      for (let x = 0; x < workingW; x++) {
         const n = rng.normal() * params.noise;
-        field.data[y * W + x] = Math.max(0, field.data[y * W + x] + n);
+        field.data[y * workingW + x] = Math.max(0, field.data[y * workingW + x] + n);
       }
     }
   }
@@ -732,7 +734,49 @@ function simulate(params: Params) {
   const m = field.max() || 1;
   for (let i = 0; i < field.data.length; i++) field.data[i] /= m;
 
-  const polys = marchingSquares(field, clamp(params.threshold, 0.02, 0.98));
+  // ---------------- Placement (applied to the underlying field) ----------------
+  // Convert pan (SVG px) into field units, and warp the raster BEFORE contouring.
+  // Camera semantics: panning right (+panX) moves viewport right, showing content from the left.
+  const size = params.svgSize;
+  const S0 = size / displayW; // svg px per field unit (without userScale)
+  const userScale = clamp(params.userScale, 0.2, 3);
+  const tField = { x: params.panX / S0, y: params.panY / S0 }; // translation in display field units
+
+  function sampleBilinear(src, x, y) {
+    // Clamp to valid range to extend edges (prevents hard clipping)
+    const sx = clamp(x, 0, src.w - 1.001);
+    const sy = clamp(y, 0, src.h - 1.001);
+    
+    const x0 = Math.floor(sx);
+    const y0 = Math.floor(sy);
+    const x1 = x0 + 1;
+    const y1 = y0 + 1;
+    const tx = sx - x0;
+    const ty = sy - y0;
+
+    const v00 = src.get(x0, y0);
+    const v10 = src.get(x1, y0);
+    const v01 = src.get(x0, y1);
+    const v11 = src.get(x1, y1);
+
+    const a = lerp(v00, v10, tx);
+    const b = lerp(v01, v11, tx);
+    return lerp(a, b, ty);
+  }
+
+  // Warp: output coord q -> input coord p = (q - tField) / userScale
+  // We align the center of the display grid with the center of the working grid.
+  const placed = new Field(displayW, displayW);
+  for (let y = 0; y < displayW; y++) {
+    for (let x = 0; x < displayW; x++) {
+      // Map display coordinate (0..displayW) to working coordinate centered at workingW/2
+      const px = (x - displayW / 2) / userScale + workingW / 2 - tField.x;
+      const py = (y - displayW / 2) / userScale + workingW / 2 - tField.y;
+      placed.data[y * displayW + x] = sampleBilinear(field, px, py);
+    }
+  }
+
+  const polys = marchingSquares(placed, clamp(params.threshold, 0.02, 0.98));
 
   const cleaned = polys
     .map((p) => chaikinSmooth(p, params.smooth))
@@ -775,10 +819,9 @@ function simulate(params: Params) {
     holes.push(item.p);
   }
 
-  // Manual placement only (may clip): simple scale + user pan/scale.
-  const size = params.svgSize;
-  const S = (size / W) * clamp(params.userScale, 0.2, 3);
-  const O = { x: params.panX, y: params.panY };
+  // Placement already applied to field above; just map field coords to SVG coords.
+  const S = size / displayW;
+  const O = { x: 0, y: 0 };
 
   function ensureWinding(poly: Vec2[], wantClockwiseYDown: boolean) {
     const a = polyArea(poly);
@@ -795,7 +838,7 @@ function simulate(params: Params) {
   const dHoles = holeFixed.map((h) => toSvgPath(h, S, O)).join(" ");
   const d = `${dOuter} ${dHoles}`.trim();
 
-  return { d, preview: field, polysCount: polys.length };
+  return { d, preview: placed, polysCount: polys.length };
 }
 
 // ------------------------- UI ------------------------------------------------
