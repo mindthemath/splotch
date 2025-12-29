@@ -1,0 +1,103 @@
+name: Generate Screenshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+        env:
+          BASE_PATH: /splotch/
+
+      - name: Install Playwright
+        run: |
+          bun add -d playwright
+          bunx playwright install chromium
+
+      - name: Start preview server and take screenshot
+        run: |
+          # Start preview server in background
+          bun run preview > /dev/null 2>&1 &
+          PREVIEW_PID=$!
+
+          # Wait for server to be ready
+          echo "Waiting for preview server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4173/splotch/ > /dev/null 2>&1; then
+              echo "Server is ready!"
+              break
+            fi
+            sleep 1
+          done
+
+          # Take screenshot
+          node << 'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            await page.setViewportSize({ width: 1920, height: 1080 });
+            await page.goto('http://localhost:4173/splotch/', { waitUntil: 'networkidle' });
+            // Wait for any animations or dynamic content to settle
+            await page.waitForTimeout(3000);
+            await page.screenshot({ path: 'screenshot.png', fullPage: true });
+            await browser.close();
+            console.log('Screenshot saved successfully');
+          })();
+          EOF
+
+          # Stop preview server
+          kill $PREVIEW_PID || true
+        env:
+          BASE_PATH: /splotch/
+
+      - name: Create orphan branch and commit screenshot
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Store screenshot in a temporary location outside git
+          cp screenshot.png /tmp/screenshot.png
+
+          # Check if screenshots branch exists
+          if git ls-remote --heads origin screenshots | grep -q screenshots; then
+            echo "Branch screenshots exists, checking out..."
+            git fetch origin screenshots:screenshots || true
+            git checkout screenshots
+            # Remove all tracked files
+            git rm -rf . 2>/dev/null || true
+          else
+            echo "Creating new orphan branch screenshots..."
+            git checkout --orphan screenshots
+          fi
+
+          # Ensure clean state (remove untracked files)
+          git clean -fd || true
+
+          # Copy screenshot to the branch after cleaning
+          mkdir -p assets
+          cp /tmp/screenshot.png assets/screenshot.png
+
+          # Commit the screenshot
+          git add assets/screenshot.png
+          git commit -m "Update landing page screenshot [skip ci]"
+
+          # Push to remote
+          git push origin screenshots --force
