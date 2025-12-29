@@ -1248,6 +1248,42 @@ export default function App() {
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
   const dp = useDebounced(p, 250);
 
+  // Read geometry from URL parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const geomParam = params.get("geom");
+    if (geomParam) {
+      const validGeometries: Geometry[] = ["circle", "line", "spray", "fling"];
+      if (validGeometries.includes(geomParam as Geometry)) {
+        const g = geomParam as Geometry;
+        if (g === "spray") {
+          setP({
+            ...DEFAULT,
+            geometry: g,
+            packets: 1000,
+            fieldSize: Math.min(DEFAULT.fieldSize, 240),
+          });
+          return;
+        }
+        if (g === "fling") {
+          setP({
+            ...DEFAULT,
+            geometry: g,
+            packets: Math.min(Math.max(DEFAULT.packets, 800), 1200),
+            fieldSize: Math.min(DEFAULT.fieldSize, 220),
+            strokes: 1,
+          });
+          return;
+        }
+        setP({
+          ...DEFAULT,
+          geometry: g,
+          sprayMagnitude: g === "line" ? 1.0 : DEFAULT.sprayMagnitude,
+        });
+      }
+    }
+  }, []);
+
   // Check if we're waiting for debounce (params changed but not yet processed)
   const isProcessing = JSON.stringify(p) !== JSON.stringify(dp);
 

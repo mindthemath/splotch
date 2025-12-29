@@ -54,7 +54,7 @@ jobs:
             const browser = await chromium.launch();
             const page = await browser.newPage();
             await page.setViewportSize({ width: 1920, height: 1080 });
-            await page.goto('http://localhost:4173/splotch/', { waitUntil: 'networkidle' });
+            await page.goto('http://localhost:4173/splotch/?geom=fling', { waitUntil: 'networkidle' });
             // Wait for any animations or dynamic content to settle
             await page.waitForTimeout(3000);
             await page.screenshot({ path: 'screenshot.png', fullPage: true });
