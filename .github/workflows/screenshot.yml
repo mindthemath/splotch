@@ -96,10 +96,14 @@ jobs:
           # Copy screenshot to the branch
           cp /tmp/capture.png .
           cp /tmp/capture2.png .
+          
+          # Generate ISO8601 timestamp for cache busting
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%MZ")
+          
           echo "# Screenshot Branch" > README.md
           echo "This branch contains automated screenshots for inclusion in the documentation." >> README.md
-          echo -e "\n![capture-1](capture.png)\n" >> README.md
-          echo -e "\n![capture-2 2](capture2.png)\n" >> README.md
+          echo -e "\n![capture-1](capture.png?${TIMESTAMP})\n" >> README.md
+          echo -e "\n![capture-2 2](capture2.png?${TIMESTAMP})\n" >> README.md
 
           # Commit only the screenshot (first and only commit)
           git add capture*.png README.md
