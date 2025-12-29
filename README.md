@@ -2,6 +2,10 @@
 
 A deterministic, seed-driven paint splat generator that creates SVG blob shapes through physics-based simulation.
 
+![capture-1](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture.png?20251228)
+
+![capture-2](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture2.png?20251228)
+
 ## Running the App
 
 Since you have Bun installed, you can run the app with:
@@ -15,6 +19,71 @@ bun run dev
 ```
 
 The app will be available at `http://localhost:5173` (or the port shown in the terminal).
+
+## Sharing Configurations
+
+The app supports sharing complete configurations via URL parameters. All slider values and settings (except export-specific options like filename and variations count) are encoded in the URL.
+
+### Using the Share Button
+
+Click the **Share** button (with the copy icon) in the Export section to copy a URL containing all current settings. When someone opens that URL, the app will automatically restore all parameters.
+
+### URL Parameter Format
+
+Parameters use short names to keep URLs manageable. All parameters are included in the URL (defaults are not omitted to ensure compatibility if defaults change).
+
+#### Parameter Name Mapping
+
+| Short Name(s) | Full Name | Description |
+|---------------|-----------|-------------|
+| `s`, `seed` | `seed` | Deterministic seed string |
+| `g`, `geom`, `geometry` | `geometry` | Geometry mode: `circle`, `line`, `spray`, or `fling` |
+| `sz` | `svgSize` | SVG export size in pixels |
+| `fs` | `fieldSize` | Internal simulation grid resolution |
+| `p` | `packets` | Number of paint packets simulated |
+| `br` | `baseRadius` | Typical droplet radius |
+| `rj` | `radiusJitter` | Random variation in droplet size |
+| `v` | `viscosity` | Paint viscosity (resists flow) |
+| `r` | `restitution` | Bounciness / secondary rebounds |
+| `d` | `drag` | Air resistance during flight |
+| `is` | `impactSpread` | Distance micro-droplets travel on impact |
+| `sm` | `smear` | Radial outward smear during slide |
+| `n` | `noise` | Randomness added to density field |
+| `b` | `blur` | Post-blur passes on density field |
+| `t` | `threshold` | Contour cutoff value |
+| `smth` | `smooth` | Chaikin smoothing iterations |
+| `sa` | `sprayAngleDeg` | Direction angle in degrees (0-360) |
+| `smag` | `sprayMagnitude` | Strength of directional drift |
+| `sc` | `sprayCovariance` | Anisotropy of spray cloud |
+| `st`, `strokes` | `strokes` | Number of fling strokes |
+| `fp` | `flingPower` | How hard paint is thrown |
+| `dir` | `directionality` | Alignment tightness for fling |
+| `an` | `anisotropy` | Elongation along velocity |
+| `tl` | `tail` | Surface streaking length |
+| `td` | `tailDroplets` | Probability of far droplets |
+| `px` | `panX` | Horizontal pan offset (pixels) |
+| `py` | `panY` | Vertical pan offset (pixels) |
+| `us` | `userScale` | Scale multiplier |
+| `iy` | `invertY` | Invert Y axis (0 or 1) |
+
+**Note:** When serializing to URL, the app uses the preferred short names (`seed`, `geom`, `strokes`) for readability, but accepts all aliases when reading from URLs.
+
+#### Example URLs
+
+```
+# Set geometry to fling
+?geom=fling
+
+# Full configuration example
+?seed=my-custom-seed&geom=fling&p=1200&fp=25&dir=0.8&an=5.2&sz=900&fs=220
+
+# Using long names
+?geometry=spray&seed=test&strokes=3&packets=1500
+```
+
+### Programmatic Usage
+
+You can programmatically construct URLs or modify existing ones. The app reads all URL parameters on page load and merges them with defaults, applying geometry-specific adjustments when needed.
 
 ## Building for Production
 
