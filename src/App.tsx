@@ -1143,7 +1143,6 @@ function SvgPreview({
         <svg
           viewBox={`0 0 ${size} ${size}`}
           width="100%"
-          height="auto"
           className="rounded-xl border bg-white"
         >
           <rect x={0} y={0} width={size} height={size} fill="white" />

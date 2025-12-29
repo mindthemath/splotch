@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="10" fill="black" />
+
+  <!-- Match the header mark: left drop smaller, right drop larger, with overlap -->
+  <g
+    transform="translate(3, 3) scale(1.05)"
+    stroke="white"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  >
+    <!-- left (smaller) -->
+    <g transform="translate(0.8, 1.1) scale(0.92)">
+      <path d="M7 16.3c2.2 0 4-1.8 4-4 0-3.3-4-6-4-6s-4 2.7-4 6c0 2.2 1.8 4 4 4Z" />
+    </g>
+
+    <!-- right (larger) -->
+    <g transform="translate(-0.8, 0.1) scale(1.12)">
+      <path d="M12 18.5c2.5 0 4.5-2 4.5-4.5 0-3.7-4.5-6.7-4.5-6.7s-4.5 3-4.5 6.7c0 2.5 2 4.5 4.5 4.5Z" />
+    </g>
+  </g>
+</svg>
