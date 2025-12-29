@@ -1303,31 +1303,6 @@ export default function App() {
                 <Row label={`Drag (${p.drag.toFixed(2)})`} help="Air resistance during flight. Higher = shorter travel before impact.">
                   <Slider value={[p.drag]} min={0} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, drag: v })} />
                 </Row>
-
-                <div className="pt-2 border-t" />
-
-                <Row label={`Noise (${p.noise.toFixed(3)})`} help="Adds subtle randomness to the density field to break perfectly smooth edges.">
-                  <Slider value={[p.noise]} min={0} max={0.12} step={0.001} onValueChange={([v]) => setP({ ...p, noise: v })} />
-                </Row>
-
-                <Row label={`Blur passes (${p.blur})`} help="Post-blur on the density field before contour extraction. Higher = smoother blobs, fewer spikes.">
-                  <Slider value={[p.blur]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, blur: v })} />
-                </Row>
-
-                <Row label={`Threshold (${p.threshold.toFixed(2)})`} help="Contour cutoff. Lower = larger blobs; higher = thinner/fragmented blobs.">
-                  <Slider value={[p.threshold]} min={0.05} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, threshold: v })} />
-                </Row>
-
-                <Row label={`Smooth (${p.smooth})`} help="Chaikin smoothing iterations on the extracted contour.">
-                  <Slider value={[p.smooth]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, smooth: v })} />
-                </Row>
-
-                <Row label="Invert Y in export" help="Flips Y axis in exported SVG (useful for some coordinate systems).">
-                  <div className="flex items-center justify-end gap-3">
-                    <span className="text-xs text-muted-foreground">{p.invertY ? "On" : "Off"}</span>
-                    <Switch checked={p.invertY} onCheckedChange={(v) => setP({ ...p, invertY: v })} />
-                  </div>
-                </Row>
               </CardContent>
             </Card>
           </div>
@@ -1354,8 +1329,38 @@ export default function App() {
                 </Row>
 
                 <div className="text-xs text-muted-foreground">
-                  Manual placement is always on. It’s OK if the blob goes out of frame — adjust Pan/Scale to compose it.
+                  Manual placement is always on. It's OK if the blob goes out of frame — adjust Pan/Scale to compose it.
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Output</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Row label={`Noise (${p.noise.toFixed(3)})`} help="Adds subtle randomness to the density field to break perfectly smooth edges.">
+                  <Slider value={[p.noise]} min={0} max={0.12} step={0.001} onValueChange={([v]) => setP({ ...p, noise: v })} />
+                </Row>
+
+                <Row label={`Blur passes (${p.blur})`} help="Post-blur on the density field before contour extraction. Higher = smoother blobs, fewer spikes.">
+                  <Slider value={[p.blur]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, blur: v })} />
+                </Row>
+
+                <Row label={`Threshold (${p.threshold.toFixed(2)})`} help="Contour cutoff. Lower = larger blobs; higher = thinner/fragmented blobs.">
+                  <Slider value={[p.threshold]} min={0.05} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, threshold: v })} />
+                </Row>
+
+                <Row label={`Smooth (${p.smooth})`} help="Chaikin smoothing iterations on the extracted contour.">
+                  <Slider value={[p.smooth]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, smooth: v })} />
+                </Row>
+
+                <Row label="Invert Y in export" help="Flips Y axis in exported SVG (useful for some coordinate systems).">
+                  <div className="flex items-center justify-end gap-3">
+                    <span className="text-xs text-muted-foreground">{p.invertY ? "On" : "Off"}</span>
+                    <Switch checked={p.invertY} onCheckedChange={(v) => setP({ ...p, invertY: v })} />
+                  </div>
+                </Row>
               </CardContent>
             </Card>
 
