@@ -104,7 +104,12 @@ export function SelectContent({ children }) {
   );
 }
 
-export function SelectItem({ value: _value, children, onClick, className = "" }) {
+export function SelectItem({
+  value: _value,
+  children,
+  onClick,
+  className = "",
+}) {
   return (
     <div
       className={`relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900 ${className}`}

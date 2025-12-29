@@ -12,7 +12,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: process.env.BASE_PATH || (process.env.NODE_ENV === "production" ? "/splotch/" : "/"),
+  base:
+    process.env.BASE_PATH ||
+    (process.env.NODE_ENV === "production" ? "/splotch/" : "/"),
   build: {
     outDir: "dist",
     assetsDir: "assets",
