@@ -988,13 +988,13 @@ function simulate(params: Params) {
 
 const DEFAULT: Params = {
   seed: "mind-the-math",
-  svgSize: 900,
+  svgSize: 512,
   fieldSize: 220,
   geometry: "spray",
 
   packets: 1000,
-  baseRadius: 2.6,
-  radiusJitter: 1.1,
+  baseRadius: 2.5,
+  radiusJitter: 1.0,
 
   viscosity: 0.3,
   restitution: 0.1,
@@ -1004,7 +1004,7 @@ const DEFAULT: Params = {
   noise: 0.02,
 
   blur: 1,
-  threshold: 0.24,
+  threshold: 0.25,
   smooth: 2,
 
   sprayAngleDeg: 20,
@@ -1012,11 +1012,11 @@ const DEFAULT: Params = {
   sprayCovariance: 0.0,
 
   strokes: 1,
-  flingPower: 22,
-  directionality: 0.78,
-  anisotropy: 4.6,
+  flingPower: 20,
+  directionality: 0.75,
+  anisotropy: 4.5,
   tail: 0.95,
-  tailDroplets: 0.8,
+  tailDroplets: 0.75,
 
   panX: 0,
   panY: 0,
