@@ -169,11 +169,15 @@ The field uses a flat array with row-major indexing:
 This means position (x, y) maps to array index `y * w + x`. The `get` and `add` methods handle bounds checking:
 
 ```typescript
-get(x: number, y: number) {
-  x = clamp(x, 0, this.w - 1);
-  y = clamp(y, 0, this.h - 1);
-  return this.data[this.idx(x, y)];
-}
+  idx(x: number, y: number) {
+    return y * this.w + x;
+  }
+
+  get(x: number, y: number) {
+    x = clamp(x, 0, this.w - 1);
+    y = clamp(y, 0, this.h - 1);
+    return this.data[this.idx(x, y)];
+  }
 
 add(x: number, y: number, v: number) {
   if (x < 0 || y < 0 || x >= this.w || y >= this.h) return;
@@ -218,7 +222,7 @@ function depositGaussian(field: Field, p: Vec2, radius: number, amount: number) 
   const r = Math.max(1, Math.floor(radius));
   const x0 = Math.floor(p.x);
   const y0 = Math.floor(p.y);
-  const sigma2 = (radius * radius) / 2;  // σ² = r²/2
+  const sigma2 = (radius * radius) / 2;  // Sets denominator to r²/2, effectively σ = r/2
   
   for (let dy = -r; dy <= r; dy++) {
     for (let dx = -r; dx <= r; dx++) {
@@ -425,6 +429,7 @@ So the contour crosses exactly halfway between the two corners.
 After collecting all segments, we stitch them into closed polygons by matching endpoints:
 
 ```typescript
+const eps = 1e-3;
 const key = (p: Vec2) => `${Math.round(p.x / eps)}:${Math.round(p.y / eps)}`;
 
 // Build adjacency map
