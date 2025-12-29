@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, createContext, useContext } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  createContext,
+  useContext,
+} from "react";
 
 const SelectContext = createContext({
   value: null,
@@ -9,7 +15,7 @@ const SelectContext = createContext({
 
 export function Select({ value, onValueChange, children }) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <SelectContext.Provider value={{ value, onValueChange, isOpen, setIsOpen }}>
       <div className="relative">{children}</div>
@@ -19,7 +25,7 @@ export function Select({ value, onValueChange, children }) {
 
 export function SelectTrigger({ className = "", children }) {
   const { setIsOpen, isOpen } = useContext(SelectContext);
-  
+
   return (
     <button
       type="button"
@@ -33,7 +39,7 @@ export function SelectTrigger({ className = "", children }) {
 
 export function SelectValue({ placeholder }) {
   const { value } = useContext(SelectContext);
-  
+
   return (
     <span>
       {value || placeholder}
@@ -73,7 +79,8 @@ export function SelectContent({ children }) {
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen, setIsOpen]);
 

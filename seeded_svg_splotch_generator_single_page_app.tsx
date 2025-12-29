@@ -6,8 +6,21 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, RefreshCcw, Sparkles, Droplets, Info, Dices } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Download,
+  RefreshCcw,
+  Sparkles,
+  Droplets,
+  Info,
+  Dices,
+} from "lucide-react";
 
 /**
  * Seeded SVG Splotch Generator
@@ -125,7 +138,12 @@ class Field {
   }
 }
 
-function depositGaussian(field: Field, p: Vec2, radius: number, amount: number) {
+function depositGaussian(
+  field: Field,
+  p: Vec2,
+  radius: number,
+  amount: number
+) {
   const r = Math.max(1, Math.floor(radius));
   const x0 = Math.floor(p.x);
   const y0 = Math.floor(p.y);
@@ -141,7 +159,14 @@ function depositGaussian(field: Field, p: Vec2, radius: number, amount: number) 
   }
 }
 
-function depositAniso(field: Field, p: Vec2, major: number, minor: number, angle: number, amount: number) {
+function depositAniso(
+  field: Field,
+  p: Vec2,
+  major: number,
+  minor: number,
+  angle: number,
+  amount: number
+) {
   // Elliptical gaussian aligned with angle.
   const R = Math.max(1, Math.floor(Math.max(major, minor)));
   const x0 = Math.floor(p.x);
@@ -156,7 +181,9 @@ function depositAniso(field: Field, p: Vec2, major: number, minor: number, angle
       const y = y0 + dy;
       const xr = dx * ca + dy * sa;
       const yr = -dx * sa + dy * ca;
-      const e = (xr * xr) / Math.max(1e-6, sMajor2) + (yr * yr) / Math.max(1e-6, sMinor2);
+      const e =
+        (xr * xr) / Math.max(1e-6, sMajor2) +
+        (yr * yr) / Math.max(1e-6, sMinor2);
       const w = Math.exp(-e);
       field.add(x, y, amount * w);
     }
@@ -348,7 +375,11 @@ function marchingSquares(field: Field, threshold: number): Poly[] {
 }
 
 function chaikinSmooth(poly: Vec2[], iterations: number) {
-  const closed = Math.hypot(poly[0].x - poly[poly.length - 1].x, poly[0].y - poly[poly.length - 1].y) < 1e-6;
+  const closed =
+    Math.hypot(
+      poly[0].x - poly[poly.length - 1].x,
+      poly[0].y - poly[poly.length - 1].y
+    ) < 1e-6;
   let pts = poly.slice(0, closed ? poly.length - 1 : poly.length);
   for (let it = 0; it < iterations; it++) {
     const out: Vec2[] = [];
@@ -408,16 +439,22 @@ function pointInPoly(p: Vec2, poly: Vec2[]) {
       yi = poly[i].y;
     const xj = poly[j].x,
       yj = poly[j].y;
-    const intersect = yi > p.y !== yj > p.y && p.x < ((xj - xi) * (p.y - yi)) / (yj - yi + 1e-12) + xi;
+    const intersect =
+      yi > p.y !== yj > p.y &&
+      p.x < ((xj - xi) * (p.y - yi)) / (yj - yi + 1e-12) + xi;
     if (intersect) inside = !inside;
   }
   return inside;
 }
 
 function toSvgPath(poly: Vec2[], scale: number, offset: Vec2) {
-  const pts = poly.map((p) => ({ x: p.x * scale + offset.x, y: p.y * scale + offset.y }));
+  const pts = poly.map((p) => ({
+    x: p.x * scale + offset.x,
+    y: p.y * scale + offset.y,
+  }));
   const cmds = [`M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`];
-  for (let i = 1; i < pts.length; i++) cmds.push(`L ${pts[i].x.toFixed(2)} ${pts[i].y.toFixed(2)}`);
+  for (let i = 1; i < pts.length; i++)
+    cmds.push(`L ${pts[i].x.toFixed(2)} ${pts[i].y.toFixed(2)}`);
   cmds.push("Z");
   return cmds.join(" ");
 }
@@ -471,13 +508,13 @@ function simulate(params: Params) {
 
   // Use a larger internal field for simulation to prevent clipping.
   const displayW = params.fieldSize;
-  const workingW = displayW * 7; 
+  const workingW = displayW * 7;
   const field = new Field(workingW, workingW);
-  
+
   // Physics units are based on displayW, so the splotch stays "normal size"
   // inside the huge workingW buffer.
   const physW = displayW;
-  
+
   // For spray geometry, offset the center opposite to spray direction
   // to compensate for the drift caused by spray magnitude
   let center = { x: workingW / 2, y: workingW / 2 };
@@ -487,9 +524,9 @@ function simulate(params: Params) {
     const offsetAmount = params.sprayMagnitude * physW * 0.35;
     center = {
       x: workingW / 2 - Math.cos(ang) * offsetAmount,
-      y: workingW / 2 - Math.sin(ang) * offsetAmount
+      y: workingW / 2 - Math.sin(ang) * offsetAmount,
     };
-  } 
+  }
 
   function sampleSource(): { p: Vec2; v: Vec2; vz: number } {
     const speed = rng.range(0.6, 1.2);
@@ -507,7 +544,10 @@ function simulate(params: Params) {
     if (params.geometry === "line") {
       const t = rng.range(-0.5, 0.5);
       const lineLen = physW * 0.22;
-      const p = add(center, { x: t * lineLen, y: rng.normal() * (physW * 0.02) });
+      const p = add(center, {
+        x: t * lineLen,
+        y: rng.normal() * (physW * 0.02),
+      });
       const v = { x: speed * rng.range(0.6, 1.3), y: rng.normal() * 0.2 };
       return { p, v, vz };
     }
@@ -523,7 +563,8 @@ function simulate(params: Params) {
       const perpStd = baseStd * (1 - 0.55 * cov);
       const meanShift = params.sprayMagnitude * (physW * 0.14);
 
-      const along = rng.normal() * alongStd + meanShift * (0.25 + 0.75 * rng.float());
+      const along =
+        rng.normal() * alongStd + meanShift * (0.25 + 0.75 * rng.float());
       const across = rng.normal() * perpStd;
       const p = add(center, add(mul(dir, along), mul(perp, across)));
 
@@ -536,7 +577,10 @@ function simulate(params: Params) {
     }
 
     // fling fallback (real fling logic below)
-    const p = add(center, { x: rng.normal() * (physW * 0.05), y: rng.normal() * (physW * 0.05) });
+    const p = add(center, {
+      x: rng.normal() * (physW * 0.05),
+      y: rng.normal() * (physW * 0.05),
+    });
     const v = { x: rng.normal() * speed * 2.0, y: rng.normal() * speed * 2.0 };
     return { p, v, vz };
   }
@@ -559,8 +603,12 @@ function simulate(params: Params) {
   const steps = params.geometry === "fling" ? 34 : 22;
   const dt = 1 / steps;
 
-  const strokeCount = params.geometry === "fling" ? Math.max(1, Math.floor(params.strokes)) : 1;
-  const packetsPerStroke = Math.max(1, Math.floor(params.packets / strokeCount));
+  const strokeCount =
+    params.geometry === "fling" ? Math.max(1, Math.floor(params.strokes)) : 1;
+  const packetsPerStroke = Math.max(
+    1,
+    Math.floor(params.packets / strokeCount)
+  );
 
   function sampleAngle(mu: number) {
     const k = clamp(params.directionality, 0, 1);
@@ -571,32 +619,46 @@ function simulate(params: Params) {
 
   function sampleBrushOrigin(dir: Vec2) {
     const perp = { x: -dir.y, y: dir.x };
-    const brushWidth = physW * 0.10;
-    const along = physW * 0.10;
+    const brushWidth = physW * 0.1;
+    const along = physW * 0.1;
     const u = rng.range(-0.5, 0.5);
     const v = rng.range(-0.5, 0.5);
     return add(center, add(mul(perp, u * brushWidth), mul(dir, v * along)));
   }
 
   for (let i = 0; i < params.packets; i++) {
-    const strokeIdx = params.geometry === "fling" ? Math.floor(i / packetsPerStroke) : 0;
+    const strokeIdx =
+      params.geometry === "fling" ? Math.floor(i / packetsPerStroke) : 0;
 
     let src = sampleSource();
     if (params.geometry === "fling") {
-      const baseAng = (xmur3(`${params.seed}::stroke::${strokeIdx}`)() / 4294967296) * Math.PI * 2;
+      const baseAng =
+        (xmur3(`${params.seed}::stroke::${strokeIdx}`)() / 4294967296) *
+        Math.PI *
+        2;
       const ang = sampleAngle(baseAng);
       const dir = norm({ x: Math.cos(ang), y: Math.sin(ang) });
       const perp = { x: -dir.y, y: dir.x };
 
       const heavy = Math.abs(rng.normal());
-      const power = params.flingPower * (0.75 + 0.65 * rng.float()) * (1 + 0.9 * heavy * heavy);
+      const power =
+        params.flingPower *
+        (0.75 + 0.65 * rng.float()) *
+        (1 + 0.9 * heavy * heavy);
 
       const along = power * (0.9 + 0.6 * rng.float());
-      const across = power * (0.08 + 0.22 * (1 - params.directionality)) * rng.normal();
+      const across =
+        power * (0.08 + 0.22 * (1 - params.directionality)) * rng.normal();
 
-      const v = add(mul(dir, along / (physW * 0.02)), mul(perp, across / (physW * 0.02)));
+      const v = add(
+        mul(dir, along / (physW * 0.02)),
+        mul(perp, across / (physW * 0.02))
+      );
       const p0 = sampleBrushOrigin(dir);
-      const jitter = add(mul(perp, rng.normal() * (physW * 0.01)), mul(dir, rng.normal() * (physW * 0.01)));
+      const jitter = add(
+        mul(perp, rng.normal() * (physW * 0.01)),
+        mul(dir, rng.normal() * (physW * 0.01))
+      );
       const p = add(p0, jitter);
 
       const vz = lerp(1.2, 2.6, clamp(heavy * 0.45, 0, 1));
@@ -639,32 +701,45 @@ function simulate(params: Params) {
     const impactEnergy = clamp((sp + Math.abs(vz)) * 0.6 * sens, 0.15, 3.2);
 
     const baseR = params.baseRadius + rng.normal() * params.radiusJitter;
-    const coreR = clamp(baseR * (0.75 + 0.45 * impactEnergy), 1.5, physW * 0.12);
+    const coreR = clamp(
+      baseR * (0.75 + 0.45 * impactEnergy),
+      1.5,
+      physW * 0.12
+    );
 
     const coreAmt = packetMass * (0.9 + 0.5 * rng.float());
     const ang = Math.atan2(tangent.y, tangent.x);
     const aniso = clamp(params.anisotropy, 1, 8);
 
     if (params.geometry === "fling") {
-      const maj = coreR * lerp(1.0, 2.6, clamp((aniso - 1) / 7, 0, 1)) * (0.9 + 0.4 * sp);
+      const maj =
+        coreR * lerp(1.0, 2.6, clamp((aniso - 1) / 7, 0, 1)) * (0.9 + 0.4 * sp);
       const min = coreR * lerp(1.0, 0.65, clamp((aniso - 1) / 7, 0, 1));
       depositAniso(field, p, maj, min, ang, coreAmt);
     } else {
       depositGaussian(field, p, coreR, coreAmt);
     }
 
-    const streaks = (params.geometry === "fling" ? 10 : 4) + Math.floor(rng.range(0, params.geometry === "fling" ? 16 : 6));
+    const streaks =
+      (params.geometry === "fling" ? 10 : 4) +
+      Math.floor(rng.range(0, params.geometry === "fling" ? 16 : 6));
     for (let k = 0; k < streaks; k++) {
       const t = rng.range(0.1, 1.0);
       const skew = rng.normal() * 0.25;
       const side = rot(tangent, skew);
       const spreadGain = params.geometry === "spray" ? 2.1 : 1.0;
-      const dist = (coreR * 0.35 + t * params.impactSpread * spreadGain * coreR * impactEnergy) * (0.6 + 0.8 * rng.float());
+      const dist =
+        (coreR * 0.35 +
+          t * params.impactSpread * spreadGain * coreR * impactEnergy) *
+        (0.6 + 0.8 * rng.float());
       const pk = add(p, mul(side, dist));
       const rk = clamp(coreR * rng.range(0.18, 0.42), 1.0, coreR * 0.8);
       const ak = packetMass * rng.range(0.08, 0.22) * (1 + sp);
       if (params.geometry === "fling") {
-        const maj = rk * (1.0 + 1.4 * clamp((params.anisotropy - 1) / 7, 0, 1)) * (0.6 + 0.6 * sp);
+        const maj =
+          rk *
+          (1.0 + 1.4 * clamp((params.anisotropy - 1) / 7, 0, 1)) *
+          (0.6 + 0.6 * sp);
         const min = rk * 0.55;
         depositAniso(field, pk, maj, min, ang, ak);
       } else {
@@ -672,7 +747,10 @@ function simulate(params: Params) {
       }
     }
 
-    const slideSteps = params.geometry === "fling" ? Math.floor(lerp(12, 38, clamp(params.tail, 0, 1.6) / 1.6)) : 9;
+    const slideSteps =
+      params.geometry === "fling"
+        ? Math.floor(lerp(12, 38, clamp(params.tail, 0, 1.6) / 1.6))
+        : 9;
     let ps = { ...p };
     const restGain = params.geometry === "spray" ? 2.2 : 1.0;
     let vv = mul(tangent, sp * clamp(params.restitution * restGain, 0, 0.95));
@@ -685,12 +763,20 @@ function simulate(params: Params) {
 
       const rad = norm(sub(ps, center));
       const smearGain = params.geometry === "spray" ? 3.0 : 1.0;
-      ps = add(ps, mul(rad, params.smear * smearGain * (0.35 + 0.65 * rng.float())));
+      ps = add(
+        ps,
+        mul(rad, params.smear * smearGain * (0.35 + 0.65 * rng.float()))
+      );
 
       // Don't clamp - let packets move freely, deposit functions handle bounds
 
-      const rr = clamp(coreR * rng.range(0.12, params.geometry === "fling" ? 0.28 : 0.35), 0.7, coreR);
-      const aa = packetMass * rng.range(0.04, params.geometry === "fling" ? 0.10 : 0.12);
+      const rr = clamp(
+        coreR * rng.range(0.12, params.geometry === "fling" ? 0.28 : 0.35),
+        0.7,
+        coreR
+      );
+      const aa =
+        packetMass * rng.range(0.04, params.geometry === "fling" ? 0.1 : 0.12);
 
       if (params.geometry === "fling") {
         const decay = Math.exp(-t / Math.max(1, slideSteps * 0.65));
@@ -701,17 +787,41 @@ function simulate(params: Params) {
         depositGaussian(field, ps, rr, aa);
       }
 
-      const splatP = 0.12 + 0.08 * (1 - params.viscosity) + (params.geometry === "fling" ? 0.10 * clamp(params.tailDroplets, 0, 2) : 0);
+      const splatP =
+        0.12 +
+        0.08 * (1 - params.viscosity) +
+        (params.geometry === "fling"
+          ? 0.1 * clamp(params.tailDroplets, 0, 2)
+          : 0);
       if (rng.float() < splatP) {
         const a2 = rng.range(0, Math.PI * 2);
         const dist2 =
           coreR *
-          rng.range(params.geometry === "fling" ? 0.9 : 0.6, params.geometry === "fling" ? 5.2 : 2.2) *
+          rng.range(
+            params.geometry === "fling" ? 0.9 : 0.6,
+            params.geometry === "fling" ? 5.2 : 2.2
+          ) *
           impactEnergy *
           (params.geometry === "fling" ? 0.7 + 0.6 * sp : 1);
-        const ps2 = add(ps, { x: Math.cos(a2) * dist2, y: Math.sin(a2) * dist2 });
-        const rr2 = clamp(coreR * rng.range(params.geometry === "fling" ? 0.03 : 0.05, params.geometry === "fling" ? 0.12 : 0.18), 0.5, 6);
-        const aa2 = packetMass * rng.range(params.geometry === "fling" ? 0.015 : 0.02, params.geometry === "fling" ? 0.05 : 0.06);
+        const ps2 = add(ps, {
+          x: Math.cos(a2) * dist2,
+          y: Math.sin(a2) * dist2,
+        });
+        const rr2 = clamp(
+          coreR *
+            rng.range(
+              params.geometry === "fling" ? 0.03 : 0.05,
+              params.geometry === "fling" ? 0.12 : 0.18
+            ),
+          0.5,
+          6
+        );
+        const aa2 =
+          packetMass *
+          rng.range(
+            params.geometry === "fling" ? 0.015 : 0.02,
+            params.geometry === "fling" ? 0.05 : 0.06
+          );
         if (params.geometry === "fling") {
           const maj = rr2 * (1.0 + 1.2 * rng.float());
           const min = rr2 * (0.55 + 0.15 * rng.float());
@@ -728,7 +838,12 @@ function simulate(params: Params) {
       vz = -vz * params.restitution;
       p = add(p, mul(v, physW * 0.01 * (0.6 + 0.4 * rng.float())));
       // Don't clamp - let packets move freely, deposit functions handle bounds
-      depositGaussian(field, p, clamp(coreR * rng.range(0.25, 0.5), 1, coreR), packetMass * rng.range(0.12, 0.25));
+      depositGaussian(
+        field,
+        p,
+        clamp(coreR * rng.range(0.25, 0.5), 1, coreR),
+        packetMass * rng.range(0.12, 0.25)
+      );
     }
   }
 
@@ -736,7 +851,10 @@ function simulate(params: Params) {
     for (let y = 0; y < workingW; y++) {
       for (let x = 0; x < workingW; x++) {
         const n = rng.normal() * params.noise;
-        field.data[y * workingW + x] = Math.max(0, field.data[y * workingW + x] + n);
+        field.data[y * workingW + x] = Math.max(
+          0,
+          field.data[y * workingW + x] + n
+        );
       }
     }
   }
@@ -758,7 +876,7 @@ function simulate(params: Params) {
     // Clamp to valid range to extend edges (prevents hard clipping)
     const sx = clamp(x, 0, src.w - 1.001);
     const sy = clamp(y, 0, src.h - 1.001);
-    
+
     const x0 = Math.floor(sx);
     const y0 = Math.floor(sy);
     const x1 = x0 + 1;
@@ -931,7 +1049,13 @@ function LoadingDot({ visible }: { visible: boolean }) {
   );
 }
 
-function PreviewCanvas({ field, loading }: { field: Field | null; loading?: boolean }) {
+function PreviewCanvas({
+  field,
+  loading,
+}: {
+  field: Field | null;
+  loading?: boolean;
+}) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -971,13 +1095,25 @@ function PreviewCanvas({ field, loading }: { field: Field | null; loading?: bool
         <div className="text-xs text-muted-foreground">(raster field)</div>
       </div>
       <div className="p-3">
-        <canvas ref={ref} className="w-full h-auto" style={{ imageRendering: "pixelated" }} />
+        <canvas
+          ref={ref}
+          className="w-full h-auto"
+          style={{ imageRendering: "pixelated" }}
+        />
       </div>
     </div>
   );
 }
 
-function SvgPreview({ d, size, loading }: { d: string; size: number; loading?: boolean }) {
+function SvgPreview({
+  d,
+  size,
+  loading,
+}: {
+  d: string;
+  size: number;
+  loading?: boolean;
+}) {
   return (
     <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/40">
@@ -991,12 +1127,24 @@ function SvgPreview({ d, size, loading }: { d: string; size: number; loading?: b
         </div>
       </div>
       <div className="p-3">
-        <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="auto" className="rounded-xl border bg-white">
+        <svg
+          viewBox={`0 0 ${size} ${size}`}
+          width="100%"
+          height="auto"
+          className="rounded-xl border bg-white"
+        >
           <rect x={0} y={0} width={size} height={size} fill="white" />
           {d ? (
             <path d={d} fill="black" fillRule="evenodd" />
           ) : (
-            <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fontSize="16" fill="#666">
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize="16"
+              fill="#666"
+            >
               (no contour — tweak threshold)
             </text>
           )}
@@ -1018,7 +1166,15 @@ function HelpIcon({ text }: { text: string }) {
   );
 }
 
-function Row({ label, help, children }: { label: string; help: string; children: React.ReactNode }) {
+function Row({
+  label,
+  help,
+  children,
+}: {
+  label: string;
+  help: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="grid grid-cols-12 items-center gap-3">
       <div className="col-span-5">
@@ -1035,16 +1191,31 @@ function Row({ label, help, children }: { label: string; help: string; children:
 function runSelfTests() {
   // Lightweight sanity checks (no external test runner required).
   // These run once in the browser (dev-friendly).
-  const base: Params = { ...DEFAULT, seed: "test-seed", geometry: "spray", packets: 600, fieldSize: 160 };
+  const base: Params = {
+    ...DEFAULT,
+    seed: "test-seed",
+    geometry: "spray",
+    packets: 600,
+    fieldSize: 160,
+  };
   const r1 = simulate(base);
   const r2 = simulate(base);
-  console.assert(r1.d === r2.d, "Determinism test failed: same seed+params should match");
+  console.assert(
+    r1.d === r2.d,
+    "Determinism test failed: same seed+params should match"
+  );
 
   const r3 = simulate({ ...base, seed: "test-seed-2" });
-  console.assert(r1.d !== r3.d, "Seed sensitivity test failed: different seed should differ");
+  console.assert(
+    r1.d !== r3.d,
+    "Seed sensitivity test failed: different seed should differ"
+  );
 
   console.assert(typeof r1.d === "string", "SVG path should be a string");
-  console.assert(r1.d.length === 0 || r1.d.startsWith("M "), "SVG path should start with 'M ' when present");
+  console.assert(
+    r1.d.length === 0 || r1.d.startsWith("M "),
+    "SVG path should start with 'M ' when present"
+  );
 }
 
 if (typeof window !== "undefined") {
@@ -1062,7 +1233,7 @@ if (typeof window !== "undefined") {
 export default function App() {
   const [p, setP] = useState<Params>(DEFAULT);
   const dp = useDebounced(p, 250);
-  
+
   // Check if we're waiting for debounce (params changed but not yet processed)
   const isProcessing = JSON.stringify(p) !== JSON.stringify(dp);
 
@@ -1110,7 +1281,9 @@ export default function App() {
 
     const desc = `Generated by Seeded SVG Splotch Generator. Params: ${JSON.stringify(meta)}`;
 
-    const flip = p.invertY ? ` transform=\"translate(0 ${size}) scale(1 -1)\"` : "";
+    const flip = p.invertY
+      ? ` transform=\"translate(0 ${size}) scale(1 -1)\"`
+      : "";
 
     return (
       `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n` +
@@ -1124,7 +1297,11 @@ export default function App() {
   }, [p, result.d]);
 
   const filename = useMemo(() => {
-    const safe = p.seed.trim().replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 40) || "splotch";
+    const safe =
+      p.seed
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]+/g, "-")
+        .slice(0, 40) || "splotch";
     return `splotch_${safe}_${p.geometry}.svg`;
   }, [p.seed, p.geometry]);
 
@@ -1143,8 +1320,12 @@ export default function App() {
                 <Droplets className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold">Seeded SVG Splotch Generator</h1>
-                <p className="text-sm text-muted-foreground">Deterministic, seed-driven paint splats → SVG export.</p>
+                <h1 className="text-xl font-semibold">
+                  Seeded SVG Splotch Generator
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Deterministic, seed-driven paint splats → SVG export.
+                </p>
               </div>
             </div>
           </div>
@@ -1161,14 +1342,20 @@ export default function App() {
               variant="outline"
               onClick={() => {
                 const h = xmur3(p.seed)();
-                setP({ ...p, seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}` });
+                setP({
+                  ...p,
+                  seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}`,
+                });
               }}
               title="Generate a new random seed"
               className="px-3"
             >
               <Dices className="h-4 w-4" />
             </Button>
-            <Button onClick={() => downloadText(filename, svgText)} disabled={!result.d}>
+            <Button
+              onClick={() => downloadText(filename, svgText)}
+              disabled={!result.d}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export SVG
             </Button>
@@ -1182,7 +1369,10 @@ export default function App() {
                 <CardTitle className="text-base">Controls</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <Row label="Seed" help="Deterministic seed string. Same seed + settings = same SVG.">
+                <Row
+                  label="Seed"
+                  help="Deterministic seed string. Same seed + settings = same SVG."
+                >
                   <Input
                     value={p.seed}
                     onChange={(e) => setP({ ...p, seed: e.target.value })}
@@ -1233,16 +1423,43 @@ export default function App() {
                   </Select>
                 </Row>
 
-                <Row label={`Packets (${p.packets})`} help="Number of paint packets simulated. More = richer detail but slower.">
-                  <Slider value={[p.packets]} min={200} max={2600} step={50} onValueChange={([v]) => setP({ ...p, packets: v })} />
+                <Row
+                  label={`Packets (${p.packets})`}
+                  help="Number of paint packets simulated. More = richer detail but slower."
+                >
+                  <Slider
+                    value={[p.packets]}
+                    min={200}
+                    max={2600}
+                    step={50}
+                    onValueChange={([v]) => setP({ ...p, packets: v })}
+                  />
                 </Row>
 
-                <Row label={`SVG size (${p.svgSize}px)`} help="Export canvas size in pixels (viewBox and width/height).">
-                  <Slider value={[p.svgSize]} min={256} max={2000} step={16} onValueChange={([v]) => setP({ ...p, svgSize: v })} />
+                <Row
+                  label={`SVG size (${p.svgSize}px)`}
+                  help="Export canvas size in pixels (viewBox and width/height)."
+                >
+                  <Slider
+                    value={[p.svgSize]}
+                    min={256}
+                    max={2000}
+                    step={16}
+                    onValueChange={([v]) => setP({ ...p, svgSize: v })}
+                  />
                 </Row>
 
-                <Row label={`Field res (${p.fieldSize})`} help="Internal simulation grid resolution. Higher = finer edges but slower.">
-                  <Slider value={[p.fieldSize]} min={128} max={420} step={4} onValueChange={([v]) => setP({ ...p, fieldSize: v })} />
+                <Row
+                  label={`Field res (${p.fieldSize})`}
+                  help="Internal simulation grid resolution. Higher = finer edges but slower."
+                >
+                  <Slider
+                    value={[p.fieldSize]}
+                    min={128}
+                    max={420}
+                    step={4}
+                    onValueChange={([v]) => setP({ ...p, fieldSize: v })}
+                  />
                 </Row>
 
                 <div className="pt-2 border-t" />
@@ -1253,21 +1470,45 @@ export default function App() {
                       label={`Spray direction (${Math.round(p.sprayAngleDeg)}°)`}
                       help="Direction of the spray bias (adds a dominant direction without expensive fling simulation)."
                     >
-                      <Slider value={[p.sprayAngleDeg]} min={0} max={360} step={1} onValueChange={([v]) => setP({ ...p, sprayAngleDeg: v })} />
+                      <Slider
+                        value={[p.sprayAngleDeg]}
+                        min={0}
+                        max={360}
+                        step={1}
+                        onValueChange={([v]) =>
+                          setP({ ...p, sprayAngleDeg: v })
+                        }
+                      />
                     </Row>
 
                     <Row
                       label={`Spray magnitude (${p.sprayMagnitude.toFixed(2)})`}
                       help="Strength of the directional drift and mean shift. Higher = more fling-like throw."
                     >
-                      <Slider value={[p.sprayMagnitude]} min={0} max={1.6} step={0.01} onValueChange={([v]) => setP({ ...p, sprayMagnitude: v })} />
+                      <Slider
+                        value={[p.sprayMagnitude]}
+                        min={0}
+                        max={1.6}
+                        step={0.01}
+                        onValueChange={([v]) =>
+                          setP({ ...p, sprayMagnitude: v })
+                        }
+                      />
                     </Row>
 
                     <Row
                       label={`Spray covariance (${p.sprayCovariance.toFixed(2)})`}
                       help="Anisotropy of the spray cloud. Higher = stretched distribution along the spray direction."
                     >
-                      <Slider value={[p.sprayCovariance]} min={0} max={1} step={0.01} onValueChange={([v]) => setP({ ...p, sprayCovariance: v })} />
+                      <Slider
+                        value={[p.sprayCovariance]}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onValueChange={([v]) =>
+                          setP({ ...p, sprayCovariance: v })
+                        }
+                      />
                     </Row>
 
                     <div className="pt-2 border-t" />
@@ -1276,72 +1517,194 @@ export default function App() {
 
                 {p.geometry === "fling" && (
                   <>
-                    <Row label={`Strokes (${p.strokes})`} help="How many correlated bursts make up the fling. More strokes = more varied directions.">
-                      <Slider value={[p.strokes]} min={1} max={14} step={1} onValueChange={([v]) => setP({ ...p, strokes: v })} />
+                    <Row
+                      label={`Strokes (${p.strokes})`}
+                      help="How many correlated bursts make up the fling. More strokes = more varied directions."
+                    >
+                      <Slider
+                        value={[p.strokes]}
+                        min={1}
+                        max={14}
+                        step={1}
+                        onValueChange={([v]) => setP({ ...p, strokes: v })}
+                      />
                     </Row>
 
-                    <Row label={`Fling power (${p.flingPower.toFixed(0)})`} help="How hard the paint is thrown. Higher = longer streaks and more energetic splatter.">
-                      <Slider value={[p.flingPower]} min={8} max={30} step={1} onValueChange={([v]) => setP({ ...p, flingPower: v })} />
+                    <Row
+                      label={`Fling power (${p.flingPower.toFixed(0)})`}
+                      help="How hard the paint is thrown. Higher = longer streaks and more energetic splatter."
+                    >
+                      <Slider
+                        value={[p.flingPower]}
+                        min={8}
+                        max={30}
+                        step={1}
+                        onValueChange={([v]) => setP({ ...p, flingPower: v })}
+                      />
                     </Row>
 
                     <Row
                       label={`Directionality (${p.directionality.toFixed(2)})`}
                       help="How tightly packets align to each stroke's main direction. Higher = cleaner, more coherent streaks."
                     >
-                      <Slider value={[p.directionality]} min={0} max={1} step={0.01} onValueChange={([v]) => setP({ ...p, directionality: v })} />
+                      <Slider
+                        value={[p.directionality]}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onValueChange={([v]) =>
+                          setP({ ...p, directionality: v })
+                        }
+                      />
                     </Row>
 
-                    <Row label={`Anisotropy (${p.anisotropy.toFixed(1)})`} help="Elongation of deposits along velocity. Higher = more streak-like marks.">
-                      <Slider value={[p.anisotropy]} min={1} max={8} step={0.1} onValueChange={([v]) => setP({ ...p, anisotropy: v })} />
+                    <Row
+                      label={`Anisotropy (${p.anisotropy.toFixed(1)})`}
+                      help="Elongation of deposits along velocity. Higher = more streak-like marks."
+                    >
+                      <Slider
+                        value={[p.anisotropy]}
+                        min={1}
+                        max={8}
+                        step={0.1}
+                        onValueChange={([v]) => setP({ ...p, anisotropy: v })}
+                      />
                     </Row>
 
-                    <Row label={`Tail (${p.tail.toFixed(2)})`} help="How long surface streaking continues after impact. Higher = longer tails.">
-                      <Slider value={[p.tail]} min={0} max={1.6} step={0.01} onValueChange={([v]) => setP({ ...p, tail: v })} />
+                    <Row
+                      label={`Tail (${p.tail.toFixed(2)})`}
+                      help="How long surface streaking continues after impact. Higher = longer tails."
+                    >
+                      <Slider
+                        value={[p.tail]}
+                        min={0}
+                        max={1.6}
+                        step={0.01}
+                        onValueChange={([v]) => setP({ ...p, tail: v })}
+                      />
                     </Row>
 
-                    <Row label={`Tail droplets (${p.tailDroplets.toFixed(2)})`} help="Probability/amount of far droplets in fling mode.">
-                      <Slider value={[p.tailDroplets]} min={0} max={2} step={0.01} onValueChange={([v]) => setP({ ...p, tailDroplets: v })} />
+                    <Row
+                      label={`Tail droplets (${p.tailDroplets.toFixed(2)})`}
+                      help="Probability/amount of far droplets in fling mode."
+                    >
+                      <Slider
+                        value={[p.tailDroplets]}
+                        min={0}
+                        max={2}
+                        step={0.01}
+                        onValueChange={([v]) => setP({ ...p, tailDroplets: v })}
+                      />
                     </Row>
 
                     <div className="pt-2 border-t" />
                   </>
                 )}
 
-                <Row label={`Base radius (${p.baseRadius.toFixed(1)})`} help="Typical droplet radius. Bigger = thicker blobs and fewer fine spikes.">
-                  <Slider value={[p.baseRadius]} min={1.0} max={10} step={0.1} onValueChange={([v]) => setP({ ...p, baseRadius: v })} />
+                <Row
+                  label={`Base radius (${p.baseRadius.toFixed(1)})`}
+                  help="Typical droplet radius. Bigger = thicker blobs and fewer fine spikes."
+                >
+                  <Slider
+                    value={[p.baseRadius]}
+                    min={1.0}
+                    max={10}
+                    step={0.1}
+                    onValueChange={([v]) => setP({ ...p, baseRadius: v })}
+                  />
                 </Row>
 
-                <Row label={`Radius jitter (${p.radiusJitter.toFixed(1)})`} help="Random variation in droplet size. Higher = more texture and variety.">
-                  <Slider value={[p.radiusJitter]} min={0} max={6} step={0.1} onValueChange={([v]) => setP({ ...p, radiusJitter: v })} />
+                <Row
+                  label={`Radius jitter (${p.radiusJitter.toFixed(1)})`}
+                  help="Random variation in droplet size. Higher = more texture and variety."
+                >
+                  <Slider
+                    value={[p.radiusJitter]}
+                    min={0}
+                    max={6}
+                    step={0.1}
+                    onValueChange={([v]) => setP({ ...p, radiusJitter: v })}
+                  />
                 </Row>
 
-                <Row label={`Viscosity (${p.viscosity.toFixed(2)})`} help="Higher viscosity resists flow and reduces streaking/slide distance.">
-                  <Slider value={[p.viscosity]} min={0} max={1} step={0.01} onValueChange={([v]) => setP({ ...p, viscosity: v })} />
+                <Row
+                  label={`Viscosity (${p.viscosity.toFixed(2)})`}
+                  help="Higher viscosity resists flow and reduces streaking/slide distance."
+                >
+                  <Slider
+                    value={[p.viscosity]}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, viscosity: v })}
+                  />
                 </Row>
 
-                <Row label={`Impact spread (${p.impactSpread.toFixed(2)})`} help="How far micro-droplets travel along the impact tangent. Higher = spikier splats.">
-                  <Slider value={[p.impactSpread]} min={0.2} max={6} step={0.01} onValueChange={([v]) => setP({ ...p, impactSpread: v })} />
+                <Row
+                  label={`Impact spread (${p.impactSpread.toFixed(2)})`}
+                  help="How far micro-droplets travel along the impact tangent. Higher = spikier splats."
+                >
+                  <Slider
+                    value={[p.impactSpread]}
+                    min={0.2}
+                    max={6}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, impactSpread: v })}
+                  />
                 </Row>
 
-                <Row label={`Smear (${p.smear.toFixed(2)})`} help="Radial outward smear during surface slide. Higher = more outward pull and streaking.">
-                  <Slider value={[p.smear]} min={0} max={0.6} step={0.01} onValueChange={([v]) => setP({ ...p, smear: v })} />
+                <Row
+                  label={`Smear (${p.smear.toFixed(2)})`}
+                  help="Radial outward smear during surface slide. Higher = more outward pull and streaking."
+                >
+                  <Slider
+                    value={[p.smear]}
+                    min={0}
+                    max={0.6}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, smear: v })}
+                  />
                 </Row>
 
-                <Row label={`Restitution (${p.restitution.toFixed(2)})`} help="Bounciness / secondary rebounds. Higher = more secondary hits and scattered texture.">
-                  <Slider value={[p.restitution]} min={0} max={0.6} step={0.01} onValueChange={([v]) => setP({ ...p, restitution: v })} />
+                <Row
+                  label={`Restitution (${p.restitution.toFixed(2)})`}
+                  help="Bounciness / secondary rebounds. Higher = more secondary hits and scattered texture."
+                >
+                  <Slider
+                    value={[p.restitution]}
+                    min={0}
+                    max={0.6}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, restitution: v })}
+                  />
                 </Row>
 
-                <Row label={`Drag (${p.drag.toFixed(2)})`} help="Air resistance during flight. Higher = shorter travel before impact.">
-                  <Slider value={[p.drag]} min={0} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, drag: v })} />
+                <Row
+                  label={`Drag (${p.drag.toFixed(2)})`}
+                  help="Air resistance during flight. Higher = shorter travel before impact."
+                >
+                  <Slider
+                    value={[p.drag]}
+                    min={0}
+                    max={0.8}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, drag: v })}
+                  />
                 </Row>
 
                 <div className="pt-4 border-t space-y-3">
-                  <Button variant="outline" onClick={() => setP(DEFAULT)} className="w-full">
+                  <Button
+                    variant="outline"
+                    onClick={() => setP(DEFAULT)}
+                    className="w-full"
+                  >
                     <RefreshCcw className="h-4 w-4 mr-2" />
                     Reset all
                   </Button>
                   <div className="text-xs text-muted-foreground leading-relaxed">
-                    Tips: If you get "no contour", lower <b>Threshold</b> or increase <b>Packets</b>/<b>Base radius</b>. Higher <b>Field res</b> yields more detail.
+                    Tips: If you get "no contour", lower <b>Threshold</b> or
+                    increase <b>Packets</b>/<b>Base radius</b>. Higher{" "}
+                    <b>Field res</b> yields more detail.
                   </div>
                 </div>
               </CardContent>
@@ -1350,8 +1713,15 @@ export default function App() {
 
           <div className="lg:col-span-7 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SvgPreview d={result.d} size={p.svgSize} loading={isProcessing} />
-              <PreviewCanvas field={result.preview ?? null} loading={isProcessing} />
+              <SvgPreview
+                d={result.d}
+                size={p.svgSize}
+                loading={isProcessing}
+              />
+              <PreviewCanvas
+                field={result.preview ?? null}
+                loading={isProcessing}
+              />
             </div>
 
             <Card className="rounded-2xl shadow-sm">
@@ -1359,18 +1729,46 @@ export default function App() {
                 <CardTitle className="text-base">Placement</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Row label={`Pan X (${Math.round(p.panX)}px)`} help="Horizontal offset applied to the exported path (pixels).">
-                  <Slider value={[p.panX]} min={-p.svgSize / 2} max={p.svgSize / 2} step={1} onValueChange={([v]) => setP({ ...p, panX: v })} />
+                <Row
+                  label={`Pan X (${Math.round(p.panX)}px)`}
+                  help="Horizontal offset applied to the exported path (pixels)."
+                >
+                  <Slider
+                    value={[p.panX]}
+                    min={-p.svgSize / 2}
+                    max={p.svgSize / 2}
+                    step={1}
+                    onValueChange={([v]) => setP({ ...p, panX: v })}
+                  />
                 </Row>
-                <Row label={`Pan Y (${Math.round(p.panY)}px)`} help="Vertical offset applied to the exported path (pixels).">
-                  <Slider value={[p.panY]} min={-p.svgSize / 2} max={p.svgSize / 2} step={1} onValueChange={([v]) => setP({ ...p, panY: v })} />
+                <Row
+                  label={`Pan Y (${Math.round(p.panY)}px)`}
+                  help="Vertical offset applied to the exported path (pixels)."
+                >
+                  <Slider
+                    value={[p.panY]}
+                    min={-p.svgSize / 2}
+                    max={p.svgSize / 2}
+                    step={1}
+                    onValueChange={([v]) => setP({ ...p, panY: v })}
+                  />
                 </Row>
-                <Row label={`Scale (${p.userScale.toFixed(2)}×)`} help="Scale multiplier applied to the exported path.">
-                  <Slider value={[p.userScale]} min={0.2} max={1.5} step={0.01} onValueChange={([v]) => setP({ ...p, userScale: v })} />
+                <Row
+                  label={`Scale (${p.userScale.toFixed(2)}×)`}
+                  help="Scale multiplier applied to the exported path."
+                >
+                  <Slider
+                    value={[p.userScale]}
+                    min={0.2}
+                    max={1.5}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, userScale: v })}
+                  />
                 </Row>
 
                 <div className="text-xs text-muted-foreground">
-                  Manual placement is always on. It's OK if the blob goes out of frame — adjust Pan/Scale to compose it.
+                  Manual placement is always on. It's OK if the blob goes out of
+                  frame — adjust Pan/Scale to compose it.
                 </div>
               </CardContent>
             </Card>
@@ -1380,26 +1778,70 @@ export default function App() {
                 <CardTitle className="text-base">Output</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Row label={`Noise (${p.noise.toFixed(3)})`} help="Adds subtle randomness to the density field to break perfectly smooth edges.">
-                  <Slider value={[p.noise]} min={0} max={0.12} step={0.001} onValueChange={([v]) => setP({ ...p, noise: v })} />
+                <Row
+                  label={`Noise (${p.noise.toFixed(3)})`}
+                  help="Adds subtle randomness to the density field to break perfectly smooth edges."
+                >
+                  <Slider
+                    value={[p.noise]}
+                    min={0}
+                    max={0.12}
+                    step={0.001}
+                    onValueChange={([v]) => setP({ ...p, noise: v })}
+                  />
                 </Row>
 
-                <Row label={`Blur passes (${p.blur})`} help="Post-blur on the density field before contour extraction. Higher = smoother blobs, fewer spikes.">
-                  <Slider value={[p.blur]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, blur: v })} />
+                <Row
+                  label={`Blur passes (${p.blur})`}
+                  help="Post-blur on the density field before contour extraction. Higher = smoother blobs, fewer spikes."
+                >
+                  <Slider
+                    value={[p.blur]}
+                    min={0}
+                    max={5}
+                    step={1}
+                    onValueChange={([v]) => setP({ ...p, blur: v })}
+                  />
                 </Row>
 
-                <Row label={`Threshold (${p.threshold.toFixed(2)})`} help="Contour cutoff. Lower = larger blobs; higher = thinner/fragmented blobs.">
-                  <Slider value={[p.threshold]} min={0.05} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, threshold: v })} />
+                <Row
+                  label={`Threshold (${p.threshold.toFixed(2)})`}
+                  help="Contour cutoff. Lower = larger blobs; higher = thinner/fragmented blobs."
+                >
+                  <Slider
+                    value={[p.threshold]}
+                    min={0.05}
+                    max={0.8}
+                    step={0.01}
+                    onValueChange={([v]) => setP({ ...p, threshold: v })}
+                  />
                 </Row>
 
-                <Row label={`Smooth (${p.smooth})`} help="Chaikin smoothing iterations on the extracted contour.">
-                  <Slider value={[p.smooth]} min={0} max={5} step={1} onValueChange={([v]) => setP({ ...p, smooth: v })} />
+                <Row
+                  label={`Smooth (${p.smooth})`}
+                  help="Chaikin smoothing iterations on the extracted contour."
+                >
+                  <Slider
+                    value={[p.smooth]}
+                    min={0}
+                    max={5}
+                    step={1}
+                    onValueChange={([v]) => setP({ ...p, smooth: v })}
+                  />
                 </Row>
 
-                <Row label="Invert Y in export" help="Flips Y axis in exported SVG (useful for some coordinate systems).">
+                <Row
+                  label="Invert Y in export"
+                  help="Flips Y axis in exported SVG (useful for some coordinate systems)."
+                >
                   <div className="flex items-center justify-end gap-3">
-                    <span className="text-xs text-muted-foreground">{p.invertY ? "On" : "Off"}</span>
-                    <Switch checked={p.invertY} onCheckedChange={(v) => setP({ ...p, invertY: v })} />
+                    <span className="text-xs text-muted-foreground">
+                      {p.invertY ? "On" : "Off"}
+                    </span>
+                    <Switch
+                      checked={p.invertY}
+                      onCheckedChange={(v) => setP({ ...p, invertY: v })}
+                    />
                   </div>
                 </Row>
               </CardContent>
@@ -1412,23 +1854,32 @@ export default function App() {
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm text-muted-foreground">
-                    Filename: <span className="font-mono text-xs">{filename}</span>
+                    Filename:{" "}
+                    <span className="font-mono text-xs">{filename}</span>
                   </div>
-                  <Button onClick={() => downloadText(filename, svgText)} className="rounded-2xl" disabled={!result.d}>
+                  <Button
+                    onClick={() => downloadText(filename, svgText)}
+                    className="rounded-2xl"
+                    disabled={!result.d}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Export SVG
                   </Button>
                 </div>
 
                 <details className="rounded-xl border bg-muted/20 p-3">
-                  <summary className="cursor-pointer text-sm">Show SVG source</summary>
-                  <pre className="mt-2 text-xs overflow-auto max-h-64 p-2 rounded-lg bg-white border font-mono">{svgText}</pre>
+                  <summary className="cursor-pointer text-sm">
+                    Show SVG source
+                  </summary>
+                  <pre className="mt-2 text-xs overflow-auto max-h-64 p-2 rounded-lg bg-white border font-mono">
+                    {svgText}
+                  </pre>
                 </details>
 
                 <div className="text-xs text-muted-foreground">
-                  The export is a single <code>&lt;path&gt;</code> using <code>fill-rule=\"evenodd\"</code>.
+                  The export is a single <code>&lt;path&gt;</code> using{" "}
+                  <code>fill-rule=\"evenodd\"</code>.
                 </div>
-
               </CardContent>
             </Card>
           </div>
@@ -1442,7 +1893,8 @@ export default function App() {
             transition={{ duration: 0.25 }}
             className="mt-6 text-xs text-muted-foreground"
           >
-            Determinism: All randomness is derived from the seed string. Changing any slider changes output deterministically.
+            Determinism: All randomness is derived from the seed string.
+            Changing any slider changes output deterministically.
           </motion.div>
         </AnimatePresence>
       </div>

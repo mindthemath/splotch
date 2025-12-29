@@ -6,12 +6,12 @@ const buttonVariants = {
   ghost: "hover:bg-gray-100",
 };
 
-export function Button({ 
-  className = "", 
-  variant = "default", 
+export function Button({
+  className = "",
+  variant = "default",
   disabled = false,
-  children, 
-  ...props 
+  children,
+  ...props
 }) {
   return (
     <button
@@ -23,4 +23,3 @@ export function Button({
     </button>
   );
 }
-

@@ -1,13 +1,21 @@
 import React from "react";
 
-export function Slider({ value, min, max, step, onValueChange, className = "", ...props }) {
+export function Slider({
+  value,
+  min,
+  max,
+  step,
+  onValueChange,
+  className = "",
+  ...props
+}) {
   const handleChange = (e) => {
     const newValue = parseFloat(e.target.value);
     onValueChange([newValue]);
   };
 
   const percentage = ((value[0] - min) / (max - min)) * 100;
-  
+
   return (
     <input
       type="range"
@@ -24,4 +32,3 @@ export function Slider({ value, min, max, step, onValueChange, className = "", .
     />
   );
 }
-
