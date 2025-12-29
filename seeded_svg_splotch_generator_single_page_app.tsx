@@ -471,7 +471,7 @@ function simulate(params: Params) {
 
   // Use a larger internal field for simulation to prevent clipping.
   const displayW = params.fieldSize;
-  const workingW = displayW * 3; 
+  const workingW = displayW * 5; 
   const field = new Field(workingW, workingW);
   const center = { x: workingW / 2, y: workingW / 2 };
   
@@ -668,7 +668,7 @@ function simulate(params: Params) {
     for (let t = 0; t < slideSteps; t++) {
       const f = surfaceFlow(ps);
       const visc = clamp(params.viscosity, 0, 1);
-      vv = add(mul(vv, 1 - 0.45 * dt), mul(f, workingW * 0.004 * (1 - visc)));
+      vv = add(mul(vv, 1 - 0.45 * dt), mul(f, physW * 0.004 * (1 - visc)));
       ps = add(ps, vv);
 
       const rad = norm(sub(ps, center));
@@ -714,7 +714,7 @@ function simulate(params: Params) {
     for (let b = 0; b < bounces; b++) {
       v = mul(v, params.restitution);
       vz = -vz * params.restitution;
-      p = add(p, mul(v, workingW * 0.01 * (0.6 + 0.4 * rng.float())));
+      p = add(p, mul(v, physW * 0.01 * (0.6 + 0.4 * rng.float())));
       // Don't clamp - let packets move freely, deposit functions handle bounds
       depositGaussian(field, p, clamp(coreR * rng.range(0.25, 0.5), 1, coreR), packetMass * rng.range(0.12, 0.25));
     }
@@ -1360,7 +1360,7 @@ export default function App() {
                   <Slider value={[p.panY]} min={-p.svgSize / 2} max={p.svgSize / 2} step={1} onValueChange={([v]) => setP({ ...p, panY: v })} />
                 </Row>
                 <Row label={`Scale (${p.userScale.toFixed(2)}×)`} help="Scale multiplier applied to the exported path.">
-                  <Slider value={[p.userScale]} min={0.2} max={3} step={0.01} onValueChange={([v]) => setP({ ...p, userScale: v })} />
+                  <Slider value={[p.userScale]} min={0.2} max={1.5} step={0.01} onValueChange={([v]) => setP({ ...p, userScale: v })} />
                 </Row>
 
                 <div className="text-xs text-muted-foreground">
