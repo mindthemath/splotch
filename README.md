@@ -37,4 +37,3 @@ bun run preview
 - Real-time preview with density field visualization
 - SVG export with customizable size and placement
 - Extensive parameter controls for fine-tuning the splat appearance
-

@@ -20,4 +20,3 @@ export function Switch({ checked, onCheckedChange, className = "", ...props }) {
     </button>
   );
 }
-
