@@ -54,12 +54,16 @@ jobs:
             const browser = await chromium.launch();
             const page = await browser.newPage();
             await page.setViewportSize({ width: 1920, height: 1080 });
-            await page.goto('http://localhost:4173/splotch/?geom=fling', { waitUntil: 'networkidle' });
+            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=1&dir=0.5', { waitUntil: 'networkidle' });
             // Wait for any animations or dynamic content to settle
             await page.waitForTimeout(3000);
             await page.screenshot({ path: 'screenshot.png', fullPage: true });
+            console.log('Screenshot for geom=fling&strokes=1&dir=0.5 saved successfully');
+            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=3&dir=0.5', { waitUntil: 'networkidle' });
+            await page.waitForTimeout(3000);
+            await page.screenshot({ path: 'screenshot2.png', fullPage: true });
+            console.log('Screenshot for geom=fling&strokes=3&dir=0.5 saved successfully');
             await browser.close();
-            console.log('Screenshot saved successfully');
           })();
           EOF
 
@@ -75,6 +79,7 @@ jobs:
 
           # Store screenshot in a temporary location outside git
           cp screenshot.png /tmp/screenshot.png
+          cp screenshot2.png /tmp/screenshot2.png
 
           # Check if screenshots branch exists
           if git ls-remote --heads origin screenshots | grep -q screenshots; then
@@ -92,10 +97,11 @@ jobs:
           # Copy screenshot to the branch
           mkdir -p assets
           cp /tmp/screenshot.png assets/screenshot.png
+          cp /tmp/screenshot2.png assets/screenshot2.png
 
           # Commit only the screenshot
-          git add assets/screenshot.png
-          git commit -m "Update landing page screenshot [skip ci]"
+          git add assets/screenshot.png assets/screenshot2.png
+          git commit -m "Update landing page screenshots [skip ci]"
 
           # Push to remote
           git push origin screenshots --force
