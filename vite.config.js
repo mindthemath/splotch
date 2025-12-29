@@ -12,9 +12,8 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base:
-    process.env.BASE_PATH ||
-    (process.env.NODE_ENV === "production" ? "/splotch/" : "/"),
+  // Use BASE_PATH from environment (e.g. CI), default to root for local dev
+  base: process.env.BASE_PATH || "/",
   build: {
     outDir: "dist",
     assetsDir: "assets",
