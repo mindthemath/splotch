@@ -90,8 +90,8 @@ jobs:
           # Always create a fresh orphan branch (no history)
           git checkout --orphan screenshots
 
-          # Remove ALL files and directories except .git
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
+          # Remove all files from git index and working directory
+          git rm -rf . 2>/dev/null || true
 
           # Copy screenshot to the branch
           mkdir -p assets
