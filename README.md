@@ -400,7 +400,7 @@ Each configuration tells us which edges the contour crosses:
 ```
 Case 0:  ○ ○    Case 1:  ● ○    Case 5:  ● ○    Case 15: ● ●
          ○ ○             ○ ○             ○ ●             ● ●
-(empty)        (corner)        (saddle)        (full)
+(empty)         (corner)        (saddle)        (full)
 ```
 
 For each case, we generate line segments connecting edge crossing points.
