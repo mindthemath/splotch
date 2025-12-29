@@ -1,5 +1,3 @@
-import React from "react";
-
 export function Switch({ checked, onCheckedChange, className = "", ...props }) {
   return (
     <button

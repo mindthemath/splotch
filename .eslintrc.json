@@ -1,13 +1,15 @@
 {
   "env": {
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "node": true
   },
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:react/jsx-runtime"
   ],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module",
@@ -15,13 +17,24 @@
       "jsx": true
     }
   },
-  "plugins": ["react"],
+  "plugins": ["react", "@typescript-eslint"],
   "settings": {
     "react": {
       "version": "detect"
     }
   },
   "rules": {
-    "react/prop-types": "off"
-  }
+    "react/prop-types": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.jsx"],
+      "parser": null,
+      "rules": {
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+      }
+    }
+  ]
 }
