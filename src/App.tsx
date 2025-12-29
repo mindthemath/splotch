@@ -991,94 +991,93 @@ function simulate(params: Params) {
 
 // Parameter name mapping (short → full, with long aliases)
 const PARAM_MAP: Record<string, keyof Params> = {
-  s: 'seed',
-  seed: 'seed', // long alias
-  g: 'geometry',
-  geom: 'geometry', // long alias
-  geometry: 'geometry', // long alias
-  sz: 'svgSize',
-  fs: 'fieldSize',
-  p: 'packets',
-  br: 'baseRadius',
-  rj: 'radiusJitter',
-  v: 'viscosity',
-  r: 'restitution',
-  d: 'drag',
-  is: 'impactSpread',
-  sm: 'smear',
-  n: 'noise',
-  b: 'blur',
-  t: 'threshold',
-  smth: 'smooth',
-  sa: 'sprayAngleDeg',
-  smag: 'sprayMagnitude',
-  sc: 'sprayCovariance',
-  st: 'strokes',
-  strokes: 'strokes', // long alias
-  fp: 'flingPower',
-  dir: 'directionality',
-  an: 'anisotropy',
-  tl: 'tail',
-  td: 'tailDroplets',
-  px: 'panX',
-  py: 'panY',
-  us: 'userScale',
-  iy: 'invertY',
+  s: "seed",
+  seed: "seed", // long alias
+  g: "geometry",
+  geom: "geometry", // long alias
+  geometry: "geometry", // long alias
+  sz: "svgSize",
+  fs: "fieldSize",
+  p: "packets",
+  br: "baseRadius",
+  rj: "radiusJitter",
+  v: "viscosity",
+  r: "restitution",
+  d: "drag",
+  is: "impactSpread",
+  sm: "smear",
+  n: "noise",
+  b: "blur",
+  t: "threshold",
+  smth: "smooth",
+  sa: "sprayAngleDeg",
+  smag: "sprayMagnitude",
+  sc: "sprayCovariance",
+  st: "strokes",
+  strokes: "strokes", // long alias
+  fp: "flingPower",
+  dir: "directionality",
+  an: "anisotropy",
+  tl: "tail",
+  td: "tailDroplets",
+  px: "panX",
+  py: "panY",
+  us: "userScale",
+  iy: "invertY",
 };
 
 // Reverse mapping for serialization (full → preferred short)
 const PARAM_REVERSE_MAP: Record<keyof Params, string> = {
-  seed: 'seed',
-  geometry: 'geom',
-  svgSize: 'sz',
-  fieldSize: 'fs',
-  packets: 'p',
-  baseRadius: 'br',
-  radiusJitter: 'rj',
-  viscosity: 'v',
-  restitution: 'r',
-  drag: 'd',
-  impactSpread: 'is',
-  smear: 'sm',
-  noise: 'n',
-  blur: 'b',
-  threshold: 't',
-  smooth: 'smth',
-  sprayAngleDeg: 'sa',
-  sprayMagnitude: 'smag',
-  sprayCovariance: 'sc',
-  strokes: 'strokes',
-  flingPower: 'fp',
-  directionality: 'dir',
-  anisotropy: 'an',
-  tail: 'tl',
-  tailDroplets: 'td',
-  panX: 'px',
-  panY: 'py',
-  userScale: 'us',
-  invertY: 'iy',
+  seed: "seed",
+  geometry: "geom",
+  svgSize: "sz",
+  fieldSize: "fs",
+  packets: "p",
+  baseRadius: "br",
+  radiusJitter: "rj",
+  viscosity: "v",
+  restitution: "r",
+  drag: "d",
+  impactSpread: "is",
+  smear: "sm",
+  noise: "n",
+  blur: "b",
+  threshold: "t",
+  smooth: "smth",
+  sprayAngleDeg: "sa",
+  sprayMagnitude: "smag",
+  sprayCovariance: "sc",
+  strokes: "strokes",
+  flingPower: "fp",
+  directionality: "dir",
+  anisotropy: "an",
+  tail: "tl",
+  tailDroplets: "td",
+  panX: "px",
+  panY: "py",
+  userScale: "us",
+  invertY: "iy",
 };
 
 // Serialize Params to URL (includes all values, not just non-defaults)
 function paramsToUrl(params: Params): string {
   const urlParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     const paramName = PARAM_REVERSE_MAP[key as keyof Params];
     if (paramName) {
-      if (typeof value === 'boolean') {
-        urlParams.set(paramName, value ? '1' : '0');
-      } else if (typeof value === 'number') {
+      if (typeof value === "boolean") {
+        urlParams.set(paramName, value ? "1" : "0");
+      } else if (typeof value === "number") {
         // Round to reasonable precision
-        const precision = value % 1 === 0 ? 0 : 
-                         Math.abs(value) < 1 ? 3 : 2;
+        const precision = value % 1 === 0 ? 0 : Math.abs(value) < 1 ? 3 : 2;
         urlParams.set(paramName, value.toFixed(precision));
       } else {
         urlParams.set(paramName, String(value));
       }
     }
   });
-  
+
   return urlParams.toString();
 }
 
@@ -1086,14 +1085,15 @@ function paramsToUrl(params: Params): string {
 function urlToParams(search: string): Partial<Params> {
   const urlParams = new URLSearchParams(search);
   const result: Partial<Params> = {};
-  
+
   Object.entries(PARAM_MAP).forEach(([paramName, fullKey]) => {
     const value = urlParams.get(paramName);
     if (value !== null) {
       const defaultValue = DEFAULT[fullKey];
-      if (typeof defaultValue === 'boolean') {
-        (result as Record<string, boolean | number | string>)[fullKey] = (value === '1' || value === 'true');
-      } else if (typeof defaultValue === 'number') {
+      if (typeof defaultValue === "boolean") {
+        (result as Record<string, boolean | number | string>)[fullKey] =
+          value === "1" || value === "true";
+      } else if (typeof defaultValue === "number") {
         const num = parseFloat(value);
         if (!isNaN(num)) {
           (result as Record<string, boolean | number | string>)[fullKey] = num;
@@ -1103,7 +1103,7 @@ function urlToParams(search: string): Partial<Params> {
       }
     }
   });
-  
+
   return result;
 }
 
@@ -1383,7 +1383,7 @@ export default function App() {
     if (Object.keys(urlParams).length > 0) {
       // Start with defaults, then apply URL params
       const newParams = { ...DEFAULT, ...urlParams } as Params;
-      
+
       // Apply geometry-specific adjustments if geometry was set from URL
       if (urlParams.geometry) {
         const g = newParams.geometry;
@@ -1400,7 +1400,7 @@ export default function App() {
           newParams.sprayMagnitude = 1.0;
         }
       }
-      
+
       setP(newParams);
     }
   }, []);
