@@ -471,13 +471,25 @@ function simulate(params: Params) {
 
   // Use a larger internal field for simulation to prevent clipping.
   const displayW = params.fieldSize;
-  const workingW = displayW * 5; 
+  const workingW = displayW * 7; 
   const field = new Field(workingW, workingW);
-  const center = { x: workingW / 2, y: workingW / 2 };
   
   // Physics units are based on displayW, so the splotch stays "normal size"
   // inside the huge workingW buffer.
-  const physW = displayW; 
+  const physW = displayW;
+  
+  // For spray geometry, offset the center opposite to spray direction
+  // to compensate for the drift caused by spray magnitude
+  let center = { x: workingW / 2, y: workingW / 2 };
+  if (params.geometry === "spray" && params.sprayMagnitude > 0) {
+    const ang = (params.sprayAngleDeg * Math.PI) / 180;
+    // Offset opposite to spray direction, scaled by magnitude and physics size
+    const offsetAmount = params.sprayMagnitude * physW * 0.35;
+    center = {
+      x: workingW / 2 - Math.cos(ang) * offsetAmount,
+      y: workingW / 2 - Math.sin(ang) * offsetAmount
+    };
+  } 
 
   function sampleSource(): { p: Vec2; v: Vec2; vz: number } {
     const speed = rng.range(0.6, 1.2);
@@ -1316,28 +1328,6 @@ export default function App() {
                     <Switch checked={p.invertY} onCheckedChange={(v) => setP({ ...p, invertY: v })} />
                   </div>
                 </Row>
-
-                <div className="pt-2 border-t" />
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="rounded-2xl" onClick={() => setP(DEFAULT)}>
-                    Reset
-                  </Button>
-                  <Button
-                    className="rounded-2xl"
-                    onClick={() => {
-                      const h = xmur3(p.seed)();
-                      setP({ ...p, seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}` });
-                    }}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-2" />
-                    New seed
-                  </Button>
-                </div>
-
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  Tips: If you get “no contour”, lower <b>Threshold</b> or increase <b>Packets</b>/<b>Base radius</b>. Higher <b>Field res</b> yields more detail.
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -1391,6 +1381,28 @@ export default function App() {
 
                 <div className="text-xs text-muted-foreground">
                   The export is a single <code>&lt;path&gt;</code> using <code>fill-rule=\"evenodd\"</code>.
+                </div>
+
+                <div className="pt-3 border-t" />
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" className="rounded-2xl" onClick={() => setP(DEFAULT)}>
+                    Reset
+                  </Button>
+                  <Button
+                    className="rounded-2xl"
+                    onClick={() => {
+                      const h = xmur3(p.seed)();
+                      setP({ ...p, seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}` });
+                    }}
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    New seed
+                  </Button>
+                </div>
+
+                <div className="text-xs text-muted-foreground leading-relaxed">
+                  Tips: If you get "no contour", lower <b>Threshold</b> or increase <b>Packets</b>/<b>Base radius</b>. Higher <b>Field res</b> yields more detail.
                 </div>
               </CardContent>
             </Card>
