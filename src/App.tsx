@@ -1243,14 +1243,7 @@ if (typeof window !== "undefined") {
 }
 
 export default function App() {
-  const [p, setP] = useState<Params>(() => {
-    // Set magnitude to 1 for line geometry by default
-    const initial = { ...DEFAULT };
-    if (initial.geometry === "line") {
-      initial.sprayMagnitude = 1.0;
-    }
-    return initial;
-  });
+  const [p, setP] = useState<Params>(DEFAULT);
   const [variations, setVariations] = useState<number>(1);
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
   const dp = useDebounced(p, 250);
