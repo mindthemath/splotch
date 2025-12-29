@@ -54,12 +54,12 @@ jobs:
             const browser = await chromium.launch();
             const page = await browser.newPage();
             await page.setViewportSize({ width: 1920, height: 1080 });
-            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=1&dir=0.5', { waitUntil: 'networkidle' });
+            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=1&dir=0.5&fp=25', { waitUntil: 'networkidle' });
             // Wait for any animations or dynamic content to settle
             await page.waitForTimeout(3000);
             await page.screenshot({ path: 'screenshot.png', fullPage: true });
             console.log('Screenshot for geom=fling&strokes=1&dir=0.5 saved successfully');
-            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=3&dir=0.5', { waitUntil: 'networkidle' });
+            await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=3&dir=0.5&fp=28', { waitUntil: 'networkidle' });
             await page.waitForTimeout(3000);
             await page.screenshot({ path: 'screenshot2.png', fullPage: true });
             console.log('Screenshot for geom=fling&strokes=3&dir=0.5 saved successfully');
@@ -81,15 +81,14 @@ jobs:
           cp screenshot.png /tmp/screenshot.png
           cp screenshot2.png /tmp/screenshot2.png
 
-          # Check if screenshots branch exists
-          if git ls-remote --heads origin screenshots | grep -q screenshots; then
-            echo "Branch screenshots exists, checking out..."
-            git fetch origin screenshots:screenshots || true
-            git checkout screenshots
-          else
-            echo "Creating new orphan branch screenshots..."
-            git checkout --orphan screenshots
-          fi
+          # Always start from main/master branch for a clean base
+          git checkout main || git checkout master || true
+
+          # Delete local screenshots branch if it exists
+          git branch -D screenshots 2>/dev/null || true
+
+          # Always create a fresh orphan branch (no history)
+          git checkout --orphan screenshots
 
           # Remove ALL files and directories except .git
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
@@ -99,9 +98,9 @@ jobs:
           cp /tmp/screenshot.png assets/screenshot.png
           cp /tmp/screenshot2.png assets/screenshot2.png
 
-          # Commit only the screenshot
+          # Commit only the screenshot (first and only commit)
           git add assets/screenshot.png assets/screenshot2.png
           git commit -m "Update landing page screenshots [skip ci]"
 
-          # Push to remote
+          # Force push to replace remote branch completely
           git push origin screenshots --force
