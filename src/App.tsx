@@ -21,6 +21,7 @@ import {
   Info,
   Dices,
   Package,
+  Copy,
 } from "lucide-react";
 import JSZip from "jszip";
 
@@ -986,6 +987,133 @@ function simulate(params: Params) {
 
 // ------------------------- UI ------------------------------------------------
 
+// ------------------------- URL Serialization ---------------------------------
+
+// Parameter name mapping (short → full, with long aliases)
+const PARAM_MAP: Record<string, keyof Params> = {
+  s: 'seed',
+  seed: 'seed', // long alias
+  g: 'geometry',
+  geom: 'geometry', // long alias
+  geometry: 'geometry', // long alias
+  sz: 'svgSize',
+  fs: 'fieldSize',
+  p: 'packets',
+  br: 'baseRadius',
+  rj: 'radiusJitter',
+  v: 'viscosity',
+  r: 'restitution',
+  d: 'drag',
+  is: 'impactSpread',
+  sm: 'smear',
+  n: 'noise',
+  b: 'blur',
+  t: 'threshold',
+  smth: 'smooth',
+  sa: 'sprayAngleDeg',
+  smag: 'sprayMagnitude',
+  sc: 'sprayCovariance',
+  st: 'strokes',
+  strokes: 'strokes', // long alias
+  fp: 'flingPower',
+  dir: 'directionality',
+  an: 'anisotropy',
+  tl: 'tail',
+  td: 'tailDroplets',
+  px: 'panX',
+  py: 'panY',
+  us: 'userScale',
+  iy: 'invertY',
+};
+
+// Reverse mapping for serialization (full → preferred short)
+const PARAM_REVERSE_MAP: Record<keyof Params, string> = {
+  seed: 'seed',
+  geometry: 'geom',
+  svgSize: 'sz',
+  fieldSize: 'fs',
+  packets: 'p',
+  baseRadius: 'br',
+  radiusJitter: 'rj',
+  viscosity: 'v',
+  restitution: 'r',
+  drag: 'd',
+  impactSpread: 'is',
+  smear: 'sm',
+  noise: 'n',
+  blur: 'b',
+  threshold: 't',
+  smooth: 'smth',
+  sprayAngleDeg: 'sa',
+  sprayMagnitude: 'smag',
+  sprayCovariance: 'sc',
+  strokes: 'strokes',
+  flingPower: 'fp',
+  directionality: 'dir',
+  anisotropy: 'an',
+  tail: 'tl',
+  tailDroplets: 'td',
+  panX: 'px',
+  panY: 'py',
+  userScale: 'us',
+  invertY: 'iy',
+};
+
+// Serialize Params to URL (includes all values, not just non-defaults)
+function paramsToUrl(params: Params): string {
+  const urlParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    const paramName = PARAM_REVERSE_MAP[key as keyof Params];
+    if (paramName) {
+      if (typeof value === 'boolean') {
+        urlParams.set(paramName, value ? '1' : '0');
+      } else if (typeof value === 'number') {
+        // Round to reasonable precision
+        const precision = value % 1 === 0 ? 0 : 
+                         Math.abs(value) < 1 ? 3 : 2;
+        urlParams.set(paramName, value.toFixed(precision));
+      } else {
+        urlParams.set(paramName, String(value));
+      }
+    }
+  });
+  
+  return urlParams.toString();
+}
+
+// Deserialize URL to Params
+function urlToParams(search: string): Partial<Params> {
+  const urlParams = new URLSearchParams(search);
+  const result: Partial<Params> = {};
+  
+  Object.entries(PARAM_MAP).forEach(([paramName, fullKey]) => {
+    const value = urlParams.get(paramName);
+    if (value !== null) {
+      const defaultValue = DEFAULT[fullKey];
+      if (typeof defaultValue === 'boolean') {
+        (result as Record<string, boolean | number | string>)[fullKey] = (value === '1' || value === 'true');
+      } else if (typeof defaultValue === 'number') {
+        const num = parseFloat(value);
+        if (!isNaN(num)) {
+          (result as Record<string, boolean | number | string>)[fullKey] = num;
+        }
+      } else {
+        (result as Record<string, boolean | number | string>)[fullKey] = value;
+      }
+    }
+  });
+  
+  return result;
+}
+
+// Generate shareable URL
+function getShareUrl(params: Params): string {
+  const base = window.location.origin + window.location.pathname;
+  const query = paramsToUrl(params);
+  return `${base}?${query}`;
+}
+
 const DEFAULT: Params = {
   seed: "mind-the-math",
   svgSize: 512,
@@ -1246,41 +1374,34 @@ export default function App() {
   const [p, setP] = useState<Params>(DEFAULT);
   const [variations, setVariations] = useState<number>(1);
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
+  const [copied, setCopied] = useState(false);
   const dp = useDebounced(p, 250);
 
-  // Read geometry from URL parameter on mount
+  // Read all parameters from URL on mount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const geomParam = params.get("geom");
-    if (geomParam) {
-      const validGeometries: Geometry[] = ["circle", "line", "spray", "fling"];
-      if (validGeometries.includes(geomParam as Geometry)) {
-        const g = geomParam as Geometry;
+    const urlParams = urlToParams(window.location.search);
+    if (Object.keys(urlParams).length > 0) {
+      // Start with defaults, then apply URL params
+      const newParams = { ...DEFAULT, ...urlParams } as Params;
+      
+      // Apply geometry-specific adjustments if geometry was set from URL
+      if (urlParams.geometry) {
+        const g = newParams.geometry;
         if (g === "spray") {
-          setP({
-            ...DEFAULT,
-            geometry: g,
-            packets: 1000,
-            fieldSize: Math.min(DEFAULT.fieldSize, 240),
-          });
-          return;
+          newParams.packets = Math.max(newParams.packets, 1000);
+          newParams.fieldSize = Math.min(newParams.fieldSize, 240);
+        } else if (g === "fling") {
+          newParams.packets = Math.min(Math.max(newParams.packets, 800), 1200);
+          newParams.fieldSize = Math.min(newParams.fieldSize, 220);
+          if (!urlParams.strokes) {
+            newParams.strokes = 1;
+          }
+        } else if (g === "line" && !urlParams.sprayMagnitude) {
+          newParams.sprayMagnitude = 1.0;
         }
-        if (g === "fling") {
-          setP({
-            ...DEFAULT,
-            geometry: g,
-            packets: Math.min(Math.max(DEFAULT.packets, 800), 1200),
-            fieldSize: Math.min(DEFAULT.fieldSize, 220),
-            strokes: 1,
-          });
-          return;
-        }
-        setP({
-          ...DEFAULT,
-          geometry: g,
-          sprayMagnitude: g === "line" ? 1.0 : DEFAULT.sprayMagnitude,
-        });
       }
+      
+      setP(newParams);
     }
   }, []);
 
@@ -1425,6 +1546,32 @@ export default function App() {
         .replace(/[^a-zA-Z0-9_-]+/g, "-")
         .slice(0, 40) || "splotch";
     return `splotch_${safe}_${p.geometry}_v${index + 1}.svg`;
+  };
+
+  // Share current configuration
+  const handleShare = async () => {
+    const shareUrl = getShareUrl(p);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (e) {
+        alert("Failed to copy URL. Please copy manually:\n" + shareUrl);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   // Generate and download variations as zip
@@ -2041,14 +2188,24 @@ export default function App() {
                     Filename:{" "}
                     <span className="font-mono text-xs">{filename}</span>
                   </div>
-                  <Button
-                    onClick={() => downloadText(filename, svgText)}
-                    className="rounded-2xl"
-                    disabled={!result.d}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export SVG
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleShare}
+                      className="rounded-2xl"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      {copied ? "Copied!" : "Share"}
+                    </Button>
+                    <Button
+                      onClick={() => downloadText(filename, svgText)}
+                      className="rounded-2xl"
+                      disabled={!result.d}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export SVG
+                    </Button>
+                  </div>
                 </div>
 
                 <details className="rounded-xl border bg-muted/20 p-3">
