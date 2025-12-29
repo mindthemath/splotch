@@ -107,7 +107,7 @@ export function SelectContent({ children }) {
 export function SelectItem({
   value: _value,
   children,
-  onClick,
+  onClick = () => {},
   className = "",
 }) {
   return (
