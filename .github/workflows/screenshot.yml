@@ -102,7 +102,7 @@ jobs:
           echo "\n![capture-2 2](capture2.png)\n" >> README.md
 
           # Commit only the screenshot (first and only commit)
-          git add capture*.png
+          git add capture*.png README.md
           git commit -m "Update landing page screenshots [skip ci]"
 
           # Force push to replace remote branch completely
