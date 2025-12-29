@@ -1,4 +1,4 @@
-name: Generate Screenshot
+name: Screen Captures
 
 on:
   workflow_dispatch:
@@ -57,11 +57,11 @@ jobs:
             await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=1&dir=0.5&fp=25', { waitUntil: 'networkidle' });
             // Wait for any animations or dynamic content to settle
             await page.waitForTimeout(3000);
-            await page.screenshot({ path: 'screenshot.png', fullPage: true });
+            await page.screenshot({ path: 'capture.png', fullPage: true });
             console.log('Screenshot for geom=fling&strokes=1&dir=0.5 saved successfully');
             await page.goto('http://localhost:4173/splotch/?geom=fling&strokes=3&dir=0.5&fp=28', { waitUntil: 'networkidle' });
             await page.waitForTimeout(3000);
-            await page.screenshot({ path: 'screenshot2.png', fullPage: true });
+            await page.screenshot({ path: 'capture2.png', fullPage: true });
             console.log('Screenshot for geom=fling&strokes=3&dir=0.5 saved successfully');
             await browser.close();
           })();
@@ -78,8 +78,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           # Store screenshot in a temporary location outside git
-          cp screenshot.png /tmp/screenshot.png
-          cp screenshot2.png /tmp/screenshot2.png
+          cp capture.png /tmp/capture.png
+          cp capture2.png /tmp/capture2.png
 
           # Always start from main/master branch for a clean base
           git checkout main || git checkout master || true
@@ -94,12 +94,15 @@ jobs:
           git rm -rf . 2>/dev/null || true
 
           # Copy screenshot to the branch
-          mkdir -p assets
-          cp /tmp/screenshot.png assets/screenshot.png
-          cp /tmp/screenshot2.png assets/screenshot2.png
+          cp /tmp/capture.png .
+          cp /tmp/capture2.png .
+          echo "# Screenshot Branch" > README.md
+          echo "This branch contains the screenshots for the README.md file." >> README.md
+          echo "\n![capture-1](capture.png)\n" >> README.md
+          echo "\n![capture-2 2](capture2.png)\n" >> README.md
 
           # Commit only the screenshot (first and only commit)
-          git add assets/screenshot.png assets/screenshot2.png
+          git add assets/capture.png assets/capture2.png
           git commit -m "Update landing page screenshots [skip ci]"
 
           # Force push to replace remote branch completely
