@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, RefreshCcw, Sparkles, Droplets, Info } from "lucide-react";
+import { Download, RefreshCcw, Sparkles, Droplets, Info, Dices } from "lucide-react";
 
 /**
  * Seeded SVG Splotch Generator
@@ -915,7 +915,23 @@ function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
-function PreviewCanvas({ field }: { field: Field | null }) {
+function LoadingDot({ visible }: { visible: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: visible ? 1 : 0, scale: visible ? 1 : 0.5 }}
+      transition={{ duration: 0.15 }}
+      className="relative"
+    >
+      <span className="flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black/40"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-black/70"></span>
+      </span>
+    </motion.div>
+  );
+}
+
+function PreviewCanvas({ field, loading }: { field: Field | null; loading?: boolean }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -950,6 +966,7 @@ function PreviewCanvas({ field }: { field: Field | null }) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Droplets className="h-4 w-4" />
           <span>Density preview</span>
+          <LoadingDot visible={!!loading} />
         </div>
         <div className="text-xs text-muted-foreground">(raster field)</div>
       </div>
@@ -960,13 +977,14 @@ function PreviewCanvas({ field }: { field: Field | null }) {
   );
 }
 
-function SvgPreview({ d, size }: { d: string; size: number }) {
+function SvgPreview({ d, size, loading }: { d: string; size: number; loading?: boolean }) {
   return (
     <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/40">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Sparkles className="h-4 w-4" />
           <span>SVG preview</span>
+          <LoadingDot visible={!!loading} />
         </div>
         <div className="text-xs text-muted-foreground">
           {size}×{size}
@@ -1044,6 +1062,9 @@ if (typeof window !== "undefined") {
 export default function App() {
   const [p, setP] = useState<Params>(DEFAULT);
   const dp = useDebounced(p, 250);
+  
+  // Check if we're waiting for debounce (params changed but not yet processed)
+  const isProcessing = JSON.stringify(p) !== JSON.stringify(dp);
 
   const result = useMemo(() => {
     try {
@@ -1131,13 +1152,23 @@ export default function App() {
             <Button
               variant="outline"
               onClick={() => setP((pp) => ({ ...pp, seed: `${pp.seed}` }))}
-              className="rounded-2xl"
               title="Re-run (deterministic, same seed)"
+              className="px-3"
             >
-              <RefreshCcw className="h-4 w-4 mr-2" />
-              Re-run
+              <RefreshCcw className="h-4 w-4" />
             </Button>
-            <Button onClick={() => downloadText(filename, svgText)} className="rounded-2xl" disabled={!result.d}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const h = xmur3(p.seed)();
+                setP({ ...p, seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}` });
+              }}
+              title="Generate a new random seed"
+              className="px-3"
+            >
+              <Dices className="h-4 w-4" />
+            </Button>
+            <Button onClick={() => downloadText(filename, svgText)} disabled={!result.d}>
               <Download className="h-4 w-4 mr-2" />
               Export SVG
             </Button>
@@ -1303,14 +1334,24 @@ export default function App() {
                 <Row label={`Drag (${p.drag.toFixed(2)})`} help="Air resistance during flight. Higher = shorter travel before impact.">
                   <Slider value={[p.drag]} min={0} max={0.8} step={0.01} onValueChange={([v]) => setP({ ...p, drag: v })} />
                 </Row>
+
+                <div className="pt-4 border-t space-y-3">
+                  <Button variant="outline" onClick={() => setP(DEFAULT)} className="w-full">
+                    <RefreshCcw className="h-4 w-4 mr-2" />
+                    Reset all
+                  </Button>
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    Tips: If you get "no contour", lower <b>Threshold</b> or increase <b>Packets</b>/<b>Base radius</b>. Higher <b>Field res</b> yields more detail.
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
 
           <div className="lg:col-span-7 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SvgPreview d={result.d} size={p.svgSize} />
-              <PreviewCanvas field={result.preview ?? null} />
+              <SvgPreview d={result.d} size={p.svgSize} loading={isProcessing} />
+              <PreviewCanvas field={result.preview ?? null} loading={isProcessing} />
             </div>
 
             <Card className="rounded-2xl shadow-sm">
@@ -1388,27 +1429,6 @@ export default function App() {
                   The export is a single <code>&lt;path&gt;</code> using <code>fill-rule=\"evenodd\"</code>.
                 </div>
 
-                <div className="pt-3 border-t" />
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="rounded-2xl" onClick={() => setP(DEFAULT)}>
-                    Reset
-                  </Button>
-                  <Button
-                    className="rounded-2xl"
-                    onClick={() => {
-                      const h = xmur3(p.seed)();
-                      setP({ ...p, seed: `${p.seed}-${(h % 100000).toString().padStart(5, "0")}` });
-                    }}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-2" />
-                    New seed
-                  </Button>
-                </div>
-
-                <div className="text-xs text-muted-foreground leading-relaxed">
-                  Tips: If you get "no contour", lower <b>Threshold</b> or increase <b>Packets</b>/<b>Base radius</b>. Higher <b>Field res</b> yields more detail.
-                </div>
               </CardContent>
             </Card>
           </div>
