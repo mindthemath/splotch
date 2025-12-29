@@ -395,13 +395,94 @@ for (let y = 0; y < h - 1; y++) {
 
 ### The 16 Cases
 
-Each configuration tells us which edges the contour crosses:
+Each configuration tells us which edges the contour crosses. The index is a 4-bit number where each bit represents a corner:
+
+- **Bit 0** (value 1): top-left (v00)
+- **Bit 1** (value 2): top-right (v10)  
+- **Bit 2** (value 4): bottom-right (v11)
+- **Bit 3** (value 8): bottom-left (v01)
+
+A filled circle (●) means that corner is above the threshold.
+
+#### How the Bit Pattern Maps to Edges
+
+The contour crosses an edge when the two corners on that edge have different states (one above threshold, one below). We label the four edges as:
 
 ```
-Case 0:  ○ ○    Case 1:  ● ○    Case 5:  ● ○    Case 15: ● ●
-         ○ ○             ○ ○             ○ ●             ● ●
-(empty)         (corner)        (saddle)        (full)
+     e0 (top)
+    ┌─────┐
+e3  │     │  e1
+    │     │
+    └─────┘
+     e2 (bottom)
 ```
+
+- **e0**: top edge (between v00 and v10)
+- **e1**: right edge (between v10 and v11)
+- **e2**: bottom edge (between v01 and v11)
+- **e3**: left edge (between v00 and v01)
+
+For each case, we interpolate the crossing points on the relevant edges, then connect them with line segments. The case number directly determines which edges to connect via a lookup table.
+
+**Example**: Case 1 has only the top-left corner above threshold (● ○ / ○ ○). The contour must cross edges e3 (left) and e0 (top) to separate the "inside" corner from the "outside" corners. So we draw a segment connecting the interpolated points on e3 and e0.
+
+The 16 cases are:
+
+**Row 1: Four corners** (single corner above threshold)
+```
+Case 1:  ● ○    Case 2:  ○ ●    Case 4:  ○ ○    Case 8:  ○ ○
+         ○ ○             ○ ○             ● ○             ○ ●
+(top-left)      (top-right)     (bottom-right)  (bottom-left)
+```
+
+**Row 2: Four edges** (two adjacent corners above threshold)
+```
+Case 3:  ● ●    Case 6:  ○ ●    Case 12: ○ ○    Case 9:  ● ○
+         ○ ○             ○ ●             ● ●             ● ○
+(top edge)      (right edge)    (bottom edge)   (left edge)
+```
+
+**Row 3: "All but" cases** (three corners above threshold)
+```
+Case 14: ○ ●    Case 7:  ● ●    Case 11: ● ●    Case 13: ● ○
+         ● ●             ○ ●             ● ○             ● ●
+(top-left)      (bottom-left)   (bottom-right)  (top-right)
+```
+
+**Row 4: Special cases** (empty, saddles, full)
+```
+Case 0:  ○ ○    Case 5:  ● ○    Case 10: ○ ●    Case 15: ● ●
+         ○ ○             ○ ●             ● ○             ● ●
+(empty)         (saddle)        (saddle)        (full)
+```
+
+**Saddle points** (cases 5 and 10) are ambiguous—they have two diagonally opposite corners above threshold. We resolve this by checking the center value: if the center is above threshold, we connect the two "inside" edges; otherwise, we connect the two "outside" edges.
+
+#### From Case Number to Line Segments
+
+Once we have the case number (0-15), we use a switch statement to determine which edges to connect. The algorithm interpolates crossing points on all potentially relevant edges, then connects them based on the case:
+
+```typescript
+// Interpolate crossing points on all four edges
+const e0 = interp(p00, p10, v00, v10);  // top edge
+const e1 = interp(p10, p11, v10, v11);  // right edge
+const e2 = interp(p01, p11, v01, v11);  // bottom edge
+const e3 = interp(p00, p01, v00, v01);  // left edge
+
+switch (idx) {
+  case 1:  // top-left only: connect left and top
+  case 14: // all but top-left: same pattern (inverted)
+    addSeg(e3, e0);
+    break;
+  case 2:  // top-right only: connect top and right
+  case 13: // all but top-right: same pattern (inverted)
+    addSeg(e0, e1);
+    break;
+  // ... etc
+}
+```
+
+Notice that complementary cases (like 1 and 14) produce the same edge connections—this is because inverting all corners flips "inside" and "outside" but follows the same edge pattern.
 
 For each case, we generate line segments connecting edge crossing points.
 
