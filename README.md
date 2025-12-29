@@ -2,9 +2,9 @@
 
 A deterministic, seed-driven paint splat generator that creates SVG blob shapes through physics-based simulation.
 
-![capture-1](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture.png?20251228)
+![capture-1](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture.png?2025-12-29T0644Z)
 
-![capture-2](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture2.png?20251228)
+![capture-2](https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture2.png?2025-12-29T0644Z)
 
 ## Running the App
 
