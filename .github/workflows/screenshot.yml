@@ -97,8 +97,8 @@ jobs:
           cp /tmp/capture.png .
           cp /tmp/capture2.png .
           
-          # Generate ISO8601 timestamp for cache busting
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%MZ")
+          # Generate ISO8601 timestamp for cache busting (no colons for URL compatibility)
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H%MZ")
           
           echo "# Screenshot Branch" > README.md
           echo "This branch contains automated screenshots for inclusion in the documentation." >> README.md
@@ -111,6 +111,20 @@ jobs:
 
           # Force push to replace remote branch completely
           git push origin screenshots --force
+
+          # Update main branch README with new cache-busted URLs
+          git checkout main || git checkout master
+          
+          # Update README.md with new timestamps
+          sed -i "s|(https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture.png?[^)]*)|(https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture.png?${TIMESTAMP})|" README.md
+          sed -i "s|(https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture2.png?[^)]*)|(https://raw.githubusercontent.com/mindthemath/splotch/screenshots/capture2.png?${TIMESTAMP})|" README.md
+          
+          # Commit and push if there are changes
+          if ! git diff --quiet README.md; then
+            git add README.md
+            git commit -m "Update screenshot URLs with cache busting [skip ci]"
+            git push origin main || git push origin master
+          fi
 
           # Success message
           echo "Done!"
