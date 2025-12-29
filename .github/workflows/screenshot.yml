@@ -97,9 +97,9 @@ jobs:
           cp /tmp/capture.png .
           cp /tmp/capture2.png .
           echo "# Screenshot Branch" > README.md
-          echo "This branch contains the screenshots for the README.md file." >> README.md
-          echo "\n![capture-1](capture.png)\n" >> README.md
-          echo "\n![capture-2 2](capture2.png)\n" >> README.md
+          echo "This branch contains automated screenshots for inclusion in the documentation." >> README.md
+          echo -e "\n![capture-1](capture.png)\n" >> README.md
+          echo -e "\n![capture-2 2](capture2.png)\n" >> README.md
 
           # Commit only the screenshot (first and only commit)
           git add capture*.png README.md
