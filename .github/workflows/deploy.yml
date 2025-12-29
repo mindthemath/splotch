@@ -42,6 +42,7 @@ jobs:
         run: bun run build
         env:
           NODE_ENV: production
+          BASE_PATH: /splotch/
 
       - name: Create .nojekyll file
         run: touch dist/.nojekyll
